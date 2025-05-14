@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MagnifyingGlassIcon, ArrowDownTrayIcon, PencilIcon, ShareIcon, Squares2X2Icon, ListBulletIcon, ViewColumnsIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ArrowDownTrayIcon, PencilIcon, ShareIcon, Squares2X2Icon, ListBulletIcon, ViewColumnsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface Report {
   id: number;
@@ -73,11 +73,12 @@ export default function ReportsPage() {
   const [viewType, setViewType] = useState<ViewType>('list');
 
   // Filter reports based on search and filters
-  const filteredReports = reports.filter(report => {
+  const filteredReports = reports.filter((report: Report) => {
     const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = selectedType === 'All Types' || report.tags.includes(selectedType);
     const matchesCreator = selectedCreator === 'Created By' || 
-      (selectedCreator === 'AI Generated' ? report.source === 'ai' : report.source === 'manual');
+      (selectedCreator === 'AI Generated' && report.source === 'ai') || 
+      (selectedCreator !== 'AI Generated' && report.source === 'manual');
     return matchesSearch && matchesType && matchesCreator;
   });
 
