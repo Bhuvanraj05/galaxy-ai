@@ -61,6 +61,7 @@ export default function TopBar() {
             onClick={() => setShowNotifications(!showNotifications)}
             aria-label="Notifications"
           >
+            <span className="sr-only">Notifications</span>
             <span className={`absolute top-0 right-0 h-2 w-2 bg-[${colors.status.error}] rounded-full`}></span>
           </Button>
           
@@ -88,7 +89,9 @@ export default function TopBar() {
             icon={<Cog6ToothIcon className="h-5 w-5" />}
             onClick={() => setShowSettings(!showSettings)}
             aria-label="Settings"
-          />
+          >
+            <span className="sr-only">Settings</span>
+          </Button>
           
           {showSettings && (
             <div className={`absolute top-full right-0 mt-2 w-64 bg-[${colors.surface}] rounded-xl border border-[${colors.surfaceBorder}] shadow-lg z-50 p-4`}>
@@ -113,7 +116,9 @@ export default function TopBar() {
           icon={isDarkMode ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
           onClick={toggleDarkMode}
           aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        />
+        >
+          <span className="sr-only">{isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+        </Button>
       </div>
     </div>
   );

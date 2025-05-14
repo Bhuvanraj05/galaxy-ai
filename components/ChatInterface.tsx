@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowUpIcon, PaperClipIcon, ChevronDownIcon, Cog6ToothIcon, DocumentTextIcon, BuildingStorefrontIcon, ClipboardDocumentCheckIcon, TruckIcon, CubeIcon, BookOpenIcon } from '@heroicons/react/24/outline';
-import { ThumbUpIcon, ThumbDownIcon, ShareIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { HandThumbUpIcon, HandThumbDownIcon, ShareIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 
 // Define message types
 type MessageRole = 'user' | 'assistant' | 'system';

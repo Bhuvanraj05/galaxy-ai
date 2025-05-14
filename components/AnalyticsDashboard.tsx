@@ -6,9 +6,26 @@ import {
   ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 import { LightBulbIcon, BoltIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import type { ForwardRefExoticComponent, SVGProps, RefAttributes } from 'react';
+
+interface DataPoint {
+  name: string;
+  samples: number;
+  failures: number;
+  avg_time: number;
+  forecast?: boolean;
+}
+
+interface Insight {
+  id: string;
+  type: 'trend' | 'anomaly' | 'prediction';
+  title: string;
+  description: string;
+  icon: ForwardRefExoticComponent<Omit<SVGProps<SVGSVGElement>, "ref"> & { title?: string; titleId?: string; } & RefAttributes<SVGSVGElement>>;
+}
 
 // Mock data for the charts
-const monthlyData = [
+const monthlyData: DataPoint[] = [
   { name: 'Jan', samples: 165, failures: 12, avg_time: 3.2 },
   { name: 'Feb', samples: 180, failures: 14, avg_time: 3.0 },
   { name: 'Mar', samples: 190, failures: 10, avg_time: 2.8 },
@@ -24,7 +41,7 @@ const monthlyData = [
 ];
 
 // Add forecast data points
-const forecastData = [
+const forecastData: DataPoint[] = [
   ...monthlyData.slice(-3),
   { name: 'Jan', samples: 340, failures: 20, avg_time: 2.9, forecast: true },
   { name: 'Feb', samples: 345, failures: 19, avg_time: 2.8, forecast: true },
@@ -32,7 +49,7 @@ const forecastData = [
 ];
 
 // Mock AI-generated insights
-const insights = [
+const insights: Insight[] = [
   {
     id: '1',
     type: 'trend',
@@ -58,6 +75,10 @@ const insights = [
 
 export default function AnalyticsDashboard() {
   const [timeframe, setTimeframe] = useState('year');
+  
+  // Separate actual and forecast data
+  const actualData = forecastData.filter(d => !d.forecast);
+  const forecastOnlyData = forecastData.filter(d => d.forecast);
   
   return (
     <div className="space-y-6">
@@ -176,7 +197,7 @@ export default function AnalyticsDashboard() {
                   fill="url(#colorSamples)" 
                   strokeWidth={2}
                   activeDot={{ r: 8 }}
-                  hide={(d) => d.forecast === true}
+                  data={actualData}
                 />
                 <Area 
                   type="monotone" 
@@ -187,7 +208,7 @@ export default function AnalyticsDashboard() {
                   fillOpacity={1} 
                   fill="url(#colorForecast)" 
                   strokeWidth={2}
-                  hide={(d) => d.forecast !== true}
+                  data={forecastOnlyData}
                 />
               </AreaChart>
             </ResponsiveContainer>
