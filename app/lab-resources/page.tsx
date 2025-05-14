@@ -45,10 +45,7 @@ const documents = [
     category: 'Safety',
     status: 'Active'
   }
-] as const;
-
-// Define document types
-type DocumentCategory = typeof documents[number]['category'];
+];
 
 // Categories with counts
 const categories = [
@@ -65,16 +62,18 @@ export default function LabResourcesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  // Define the valid categories type
+  type CategoryType = 'Analysis' | 'Safety' | 'Equipment' | 'Quality';
+  
   // Get category badge style
-  const getCategoryStyle = (category: DocumentCategory) => {
-    const styles = {
+  const getCategoryStyle = (category: string) => {
+    const styles: Record<CategoryType, string> = {
       'Analysis': 'bg-teal-950 text-teal-400',
       'Safety': 'bg-red-950 text-red-400',
       'Equipment': 'bg-blue-950 text-blue-400',
       'Quality': 'bg-purple-950 text-purple-400'
-    } as const;
-    
-    return styles[category] || 'bg-gray-950 text-gray-400';
+    };
+    return styles[category as CategoryType] || 'bg-gray-950 text-gray-400';
   };
 
   // Filter documents based on search and category
