@@ -12,7 +12,7 @@ interface Document {
   title: string;
   type: string;
   dateAdded: string;
-  category: CategoryType;
+  category: string;
   status: string;
 }
 
@@ -76,14 +76,15 @@ export default function LabResourcesPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Get category badge style
-  const getCategoryStyle = (category: CategoryType) => {
-    const styles: Record<CategoryType, string> = {
+  const getCategoryStyle = (category: string): string => {
+    const categoryStyles = {
       'Analysis': 'bg-teal-950 text-teal-400',
       'Safety': 'bg-red-950 text-red-400',
       'Equipment': 'bg-blue-950 text-blue-400',
       'Quality': 'bg-purple-950 text-purple-400'
-    };
-    return styles[category] || 'bg-gray-950 text-gray-400';
+    } as const;
+
+    return (categoryStyles as Record<string, string>)[category] || 'bg-gray-950 text-gray-400';
   };
 
   // Filter documents based on search and category
