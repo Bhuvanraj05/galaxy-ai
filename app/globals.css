@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1F2E;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A2F38;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #363B44;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2F38 #1A1F2E;
+}
+
+/* Custom utility classes */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2F38 #1A1F2E;
+}
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 18, 22, 32;
+  --background-end-rgb: 18, 22, 32;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+--foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 15, 23, 42;
+    --background-end-rgb: 30, 41, 59;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+@layer components {
+  .input-base {
+    @apply bg-[#1A1F2E] text-white placeholder-gray-400 focus:outline-none rounded-xl;
+  }
+  
+  .button-base {
+    @apply transition-colors duration-200 rounded-xl text-sm;
+  }
+  
+  .button-primary {
+    @apply button-base bg-[#00C4A7] text-white hover:bg-[#00B39A];
+  }
+  
+  .button-secondary {
+    @apply button-base bg-[#232834] text-white hover:bg-[#2A2F38];
+  }
+  
+  .btn-primary {
+    @apply bg-primary-900 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-lg shadow-md p-6;
+  }
+}
+
+/* Custom styles for chat interface */
+.chat-message {
+  max-width: 800px;
+  margin-bottom: 1.5rem;
+}
+
+.user-message {
+  background-color: #00C4A7;
+  color: white;
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  margin-left: auto;
+  max-width: 480px;
+}
+
+.assistant-message {
+  background-color: #1A1F2E;
+  color: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.chart-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #2A2F38;
+}
+
+.chart-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2A2F38;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.input-container {
+  background-color: #1A1F2E;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.category-button {
+  background-color: #1A1F2E;
+  color: #9CA3AF;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.category-button:hover {
+  background-color: #2A2F38;
+  color: white;
+} 
