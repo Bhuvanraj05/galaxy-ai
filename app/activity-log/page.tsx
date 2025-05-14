@@ -57,6 +57,15 @@ const activities = [
 
 const ITEMS_PER_PAGE = 6;
 
+// Define the CategoryStyles type
+type CategoryStyles = {
+  Data: string;
+  Analysis: string;
+  Report: string;
+  Document: string;
+  Security: string;
+};
+
 export default function ActivityLogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
@@ -67,14 +76,14 @@ export default function ActivityLogPage() {
 
   // Get category badge style
   const getCategoryStyle = (category: string) => {
-    const styles = {
+    const styles: CategoryStyles = {
       'Data': 'bg-blue-950 text-blue-400',
       'Analysis': 'bg-purple-950 text-purple-400',
       'Report': 'bg-emerald-950 text-emerald-400',
       'Document': 'bg-amber-950 text-amber-400',
       'Security': 'bg-red-950 text-red-400'
     };
-    return styles[category] || 'bg-gray-950 text-gray-400';
+    return (category in styles ? styles[category as keyof CategoryStyles] : 'bg-gray-950 text-gray-400');
   };
 
   // Filter activities based on search and category
