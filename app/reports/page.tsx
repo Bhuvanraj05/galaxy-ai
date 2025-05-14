@@ -3,15 +3,26 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon, ArrowDownTrayIcon, PencilIcon, ShareIcon, Squares2X2Icon, ListBulletIcon, ViewColumnsIcon } from '@heroicons/react/24/outline';
 
+interface Report {
+  id: number;
+  title: string;
+  author: string;
+  timeAgo: string;
+  fileName: string;
+  tags: string[];
+  source: 'ai' | 'manual';
+}
+
 // Mock data for reports
-const reports = [
+const reports: Report[] = [
   {
     id: 1,
     title: 'DON Test Analysis - March 2025',
     author: 'John Smith',
     timeAgo: '2 days ago',
     fileName: 'Test_001.xlsx',
-    tags: ['DON', 'Corn', 'Monthly']
+    tags: ['DON', 'Corn', 'Monthly'],
+    source: 'manual'
   },
   {
     id: 2,
@@ -19,7 +30,8 @@ const reports = [
     author: 'Galaxy AI',
     timeAgo: '1 week ago',
     fileName: 'LIMS_Sync_B005',
-    tags: ['Compliance', 'B-005']
+    tags: ['Compliance', 'B-005'],
+    source: 'ai'
   },
   {
     id: 3,
@@ -27,7 +39,8 @@ const reports = [
     author: 'Sarah Lee',
     timeAgo: '2 weeks ago',
     fileName: 'Test_001.xlsx +1',
-    tags: ['Aflatoxin', 'Trend', 'Quarterly']
+    tags: ['Aflatoxin', 'Trend', 'Quarterly'],
+    source: 'manual'
   },
   {
     id: 4,
@@ -35,7 +48,8 @@ const reports = [
     author: 'Galaxy AI',
     timeAgo: '1 month ago',
     fileName: 'Supplier_Data_2025.xlsx',
-    tags: ['Risk', 'Supplier', 'Automated']
+    tags: ['Risk', 'Supplier', 'Automated'],
+    source: 'ai'
   }
 ];
 
