@@ -1,24 +1,48 @@
+import type { FC, ReactElement } from 'react';
 import React, { useState } from 'react';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Document, Page, pdfjs } from 'react-pdf';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
+// Disable worker to avoid canvas dependency issues
+const options = {
+  cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/cmaps/',
+  cMapPacked: true,
+  standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/standard_fonts/',
+  disableWorker: true,
+  disableAutoFetch: true,
+  disableStream: true,
+} as const;
+
 interface PDFViewerModalProps {
   pdfUrl: string;
   onClose: () => void;
 }
 
-export default function PDFViewerModal({ pdfUrl, onClose }: PDFViewerModalProps) {
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
+interface OnDocumentLoadSuccess {
+  numPages: number;
+}
 
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+const PDFViewerModal: FC<PDFViewerModalProps> = ({ pdfUrl, onClose }): ReactElement => {
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+
+  const onDocumentLoadSuccess = ({ numPages }: OnDocumentLoadSuccess): void => {
     setNumPages(numPages);
-  }
+  };
+
+  const goToPrevPage = (): void => {
+    setPageNumber((prev: number) => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = (): void => {
+    setPageNumber((prev: number) => Math.min(prev + 1, numPages || prev));
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -37,17 +61,14 @@ export default function PDFViewerModal({ pdfUrl, onClose }: PDFViewerModalProps)
           <Document
             file={pdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
-            options={{
-              cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/cmaps/',
-              cMapPacked: true,
-              standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/standard_fonts/'
-            }}
+            options={options}
           >
             <Page 
               pageNumber={pageNumber} 
               renderTextLayer={false}
               renderAnnotationLayer={false}
               className="max-w-full"
+              canvasBackground="transparent"
             />
           </Document>
         </div>
@@ -55,7 +76,7 @@ export default function PDFViewerModal({ pdfUrl, onClose }: PDFViewerModalProps)
         <div className="flex items-center justify-between p-4 border-t border-[#2A2F38]">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))}
+              onClick={goToPrevPage}
               disabled={pageNumber <= 1}
               className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
             >
@@ -65,7 +86,7 @@ export default function PDFViewerModal({ pdfUrl, onClose }: PDFViewerModalProps)
               Page {pageNumber} of {numPages}
             </span>
             <button
-              onClick={() => setPageNumber(prev => Math.min(prev + 1, numPages || prev))}
+              onClick={goToNextPage}
               disabled={pageNumber >= (numPages || 1)}
               className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
             >
@@ -76,4 +97,6 @@ export default function PDFViewerModal({ pdfUrl, onClose }: PDFViewerModalProps)
       </div>
     </div>
   );
-} 
+};
+
+export default PDFViewerModal;
