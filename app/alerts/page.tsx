@@ -517,7 +517,7 @@ export default function AlertsPage() {
         <PDFViewerModal
           isOpen={selectedDocument !== null}
           onClose={() => setSelectedDocument(null)}
-          documentUrl={selectedDocument?.url || ''}
+          pdfUrl={selectedDocument?.url || ''}
           documentTitle={selectedDocument?.title || ''}
         />
       </div>

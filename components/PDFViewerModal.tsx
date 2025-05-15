@@ -5,10 +5,14 @@ const ClientPDFViewer = dynamic(() => import('./ClientPDFViewer'), {
 });
 
 interface PDFViewerModalProps {
+  isOpen: boolean;
   pdfUrl: string;
+  documentTitle?: string;
   onClose: () => void;
 }
 
-export default function PDFViewerModal({ pdfUrl, onClose }: PDFViewerModalProps) {
+export default function PDFViewerModal({ isOpen, pdfUrl, documentTitle, onClose }: PDFViewerModalProps) {
+  if (!isOpen) return null;
+  
   return <ClientPDFViewer pdfUrl={pdfUrl} onClose={onClose} />;
 }
