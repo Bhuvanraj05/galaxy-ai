@@ -914,7 +914,7 @@ export default function AskPage() {
                     <div
                       className={`max-w-[70%] rounded-2xl px-6 py-4 ${
                         message.role === 'user'
-                          ? 'bg-[#00C4A7] text-white'
+                          ? 'bg-[#00C4A7]/10 text-[#00C4A7] border border-[#00C4A7]/30'
                           : 'bg-[#1A1F2E] text-[#B0B8C1]'
                       }`}
                     >
@@ -1042,7 +1042,7 @@ export default function AskPage() {
           {/* Static Bottom Container */}
           <div className="sticky bottom-0 bg-[#121620] pt-4">
             {/* Input Area */}
-            <form onSubmit={handleSubmit} className="flex items-center bg-[#1A1F2E] rounded-2xl px-8 py-5 mb-4">
+            <form onSubmit={handleSubmit} className="flex items-center bg-[#1A1F2E] rounded-2xl px-6 py-4 mb-6 border border-[#2A2F38]">
               <PaperClipIcon className="h-6 w-6 text-[#B0B8C1] mr-4" />
               <input
                 type="text"
