@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
   MagnifyingGlassIcon,
@@ -96,7 +96,8 @@ const mockUploads = [
   }
 ];
 
-export default function ReportsPage() {
+// Separate client component for search params handling
+function ReportsContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -334,5 +335,28 @@ export default function ReportsPage() {
         onGenerate={handleGenerateReport}
       />
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 bg-[#121620] p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 w-48 bg-[#1A1F2E] rounded mb-6"></div>
+            <div className="h-10 w-full bg-[#1A1F2E] rounded mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="bg-[#1A1F2E] rounded-xl p-6 h-48"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <ReportsContent />
+    </Suspense>
   );
 } 
