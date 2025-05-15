@@ -75,7 +75,6 @@ export default function SettingsPage() {
               <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-medium text-white">Profile Settings</h2>
-                  <p className="text-gray-400 text-sm">Manage your profile information and lab details</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">

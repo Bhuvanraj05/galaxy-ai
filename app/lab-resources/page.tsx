@@ -74,6 +74,9 @@ export default function LabResourcesPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [documentType, setDocumentType] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
 
   // Get category badge style
   const getCategoryStyle = (category: string): string => {
@@ -100,8 +103,8 @@ export default function LabResourcesPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Lab Resources</h1>
-            <p className="text-gray-400 text-sm mt-1">Train Galaxy AI with your Lab Resources</p>
+            <h1 className="text-2xl font-semibold text-white">Knowledge base</h1>
+            <p className="text-gray-400 text-sm mt-1">Train Galaxy AI with your Knowledge base</p>
           </div>
           <button
             onClick={() => setShowUploadModal(true)}
@@ -204,7 +207,12 @@ export default function LabResourcesPage() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-white text-xl font-medium">Upload Documents</h2>
                 <button
-                  onClick={() => setShowUploadModal(false)}
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setShowCustomCategory(false);
+                    setCustomCategory('');
+                    setDocumentType('');
+                  }}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -225,16 +233,50 @@ export default function LabResourcesPage() {
 
                 <div>
                   <label className="block text-white text-sm mb-2">Document Type</label>
-                  <select className="w-full bg-[#232834] text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]">
-                    <option>Select type...</option>
-                    <option>SOP</option>
-                    <option>MSDS</option>
-                    <option>Guide</option>
-                    <option>Protocol</option>
+                  <select 
+                    value={documentType}
+                    onChange={(e) => {
+                      setDocumentType(e.target.value);
+                      setShowCustomCategory(e.target.value === 'Other');
+                      if (e.target.value !== 'Other') {
+                        setCustomCategory('');
+                      }
+                    }}
+                    className="w-full bg-[#232834] text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
+                  >
+                    <option value="">Select type...</option>
+                    <option value="SOP">SOP</option>
+                    <option value="MSDS">MSDS</option>
+                    <option value="Guide">Guide</option>
+                    <option value="Protocol">Protocol</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
-                <button className="w-full bg-[#00C4A7] text-white py-2 rounded-lg text-sm hover:bg-[#00C4A7]/90 transition-colors">
+                {showCustomCategory && (
+                  <div className="space-y-2">
+                    <label className="block text-white text-sm">Custom Category Name</label>
+                    <input
+                      type="text"
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      placeholder="Enter custom category name"
+                      className="w-full bg-[#232834] text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
+                    />
+                    <p className="text-gray-400 text-xs">
+                      Please enter a descriptive name for your custom category
+                    </p>
+                  </div>
+                )}
+
+                <button 
+                  className={`w-full py-2 rounded-lg text-sm transition-colors ${
+                    (!documentType || (showCustomCategory && !customCategory))
+                    ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                    : 'bg-[#00C4A7] text-white hover:bg-[#00C4A7]/90'
+                  }`}
+                  disabled={!documentType || (showCustomCategory && !customCategory)}
+                >
                   Upload
                 </button>
               </div>

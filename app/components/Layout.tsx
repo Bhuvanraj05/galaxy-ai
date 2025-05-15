@@ -24,7 +24,7 @@ const sidebarItems = [
   { name: 'Your Reports', icon: DocumentTextIcon, href: '/reports' },
   { name: 'Alerts', icon: ExclamationTriangleIcon, href: '/alerts' },
   { name: 'Activity Log', icon: ClockIcon, href: '/activity-log' },
-  { name: 'Lab Resources', icon: FolderIcon, href: '/lab-resources' },
+  { name: 'Knowledge base', icon: FolderIcon, href: '/lab-resources' },
   { name: 'Integrations', icon: LinkIcon, href: '/integrations' },
   { name: 'Settings', icon: Cog6ToothIcon, href: '/settings' },
 ];

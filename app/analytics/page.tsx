@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowUpIcon, ArrowDownIcon, MagnifyingGlassIcon, ArrowsPointingOutIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowUpIcon, ArrowDownIcon, MagnifyingGlassIcon, ArrowsPointingOutIcon, XMarkIcon, ShareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
 // Mock data for the failed tests chart
@@ -30,16 +30,16 @@ export default function AnalyticsPage() {
   // Stats data
   const stats = [
     {
-      title: 'Tests Processed Today',
-      value: '2896',
-      change: '8% from yesterday',
+      title: 'Samples Processed',
+      value: '4287',
+      change: '12% from yesterday',
       trend: 'up',
       info: 'More info'
     },
     {
-      title: 'Samples Processed',
-      value: '4287',
-      change: '12% from yesterday',
+      title: 'Tests Processed Today',
+      value: '2896',
+      change: '8% from yesterday',
       trend: 'up',
       info: 'More info'
     },
@@ -78,6 +78,18 @@ export default function AnalyticsPage() {
     setExpandedChart(null);
   };
 
+  // Add new function for handling export
+  const handleExport = () => {
+    // Implementation for exporting chart
+    console.log('Exporting chart');
+  };
+
+  // Add new function for handling share
+  const handleShare = () => {
+    // Implementation for sharing chart
+    console.log('Sharing chart');
+  };
+
   // Render expanded chart modal
   const renderExpandedChart = () => {
     if (!expandedChart) return null;
@@ -90,12 +102,26 @@ export default function AnalyticsPage() {
         <div className="bg-[#1A1F2E] rounded-xl w-[90vw] h-[80vh] p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-white text-xl font-medium">{chartTitle}</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExport}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Export"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleShare}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Share"
+              >
+                <ShareIcon className="h-5 w-5" />
+              </button>
               <button
                 onClick={handleAddToReports}
                 className="px-4 py-2 bg-[#00C4A7] text-white rounded-lg text-sm hover:bg-[#00C4A7]/90 transition-colors"
               >
-                Add to Your Reports
+                Add to Reports
               </button>
               <button
                 onClick={() => setExpandedChart(null)}
@@ -154,7 +180,7 @@ export default function AnalyticsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header with controls */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold text-white">Analytics Report</h1>
+          <h1 className="text-2xl font-semibold text-white">Analytics</h1>
           <div className="flex items-center gap-4">
             {/* Search */}
             <div className="relative">
@@ -178,14 +204,6 @@ export default function AnalyticsPage() {
                 <option>Last 90 days</option>
               </select>
             </div>
-
-            {/* Export buttons */}
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#232834] text-white rounded-lg text-sm hover:bg-[#2A2F38] transition-colors">
-              Export PDF
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#232834] text-white rounded-lg text-sm hover:bg-[#2A2F38] transition-colors">
-              Export CSV
-            </button>
           </div>
         </div>
 
@@ -220,7 +238,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 gap-6 mb-8">
           <div className="bg-[#1A1F2E] rounded-xl p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-white text-lg font-medium">Upload Analysis</h2>
+          <h2 className="text-white text-lg font-medium">Upload Analysis</h2>
               <div className="flex items-center gap-4">
                 <select
                   value={selectedDataset}
@@ -238,9 +256,6 @@ export default function AnalyticsPage() {
                   <option>Weekly</option>
                   <option>Daily</option>
                 </select>
-                <button className="flex items-center gap-2 px-4 py-2 bg-[#232834] text-white rounded-lg text-sm hover:bg-[#2A2F38] transition-colors">
-                  Export PDF
-                </button>
               </div>
             </div>
 
@@ -249,12 +264,38 @@ export default function AnalyticsPage() {
             }`}>
               {/* Failed Tests Chart */}
               <div className="h-[300px] relative">
-                <button 
-                  onClick={() => setExpandedChart('failed-tests')}
-                  className="absolute top-2 right-2 p-2 hover:bg-[#232834] rounded-lg transition-colors z-10"
-                >
-                  <ArrowsPointingOutIcon className="h-5 w-5 text-gray-400" />
-                </button>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-medium text-white">Number of Failed Tests</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExport}
+                      className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                      title="Export"
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                      title="Share"
+                    >
+                      <ShareIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleAddToReports()}
+                      className="px-3 py-1.5 bg-[#00C4A7]/10 text-[#00C4A7] rounded-lg text-sm hover:bg-[#00C4A7]/20 transition-colors"
+                    >
+                      Add to Reports
+                    </button>
+                    <button
+                      onClick={() => setExpandedChart('failed-tests')}
+                      className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                      title="Expand"
+                    >
+                      <ArrowsPointingOutIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={failedTestsData}>
                     <XAxis dataKey="time" stroke="#6B7280" />
@@ -273,13 +314,38 @@ export default function AnalyticsPage() {
 
               {/* Vendor Performance Chart */}
               <div className="h-[300px] relative">
-                <button 
-                  onClick={() => setExpandedChart('vendor-performance')}
-                  className="absolute top-2 right-2 p-2 hover:bg-[#232834] rounded-lg transition-colors z-10"
-                >
-                  <ArrowsPointingOutIcon className="h-5 w-5 text-gray-400" />
-                </button>
-                <h3 className="text-white text-lg mb-4">AgroHarvest Q1 Performance Metrics</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-medium text-white">AgroHarvest Q1 Performance Metrics</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExport}
+                      className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                      title="Export"
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                      title="Share"
+                    >
+                      <ShareIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleAddToReports()}
+                      className="px-3 py-1.5 bg-[#00C4A7]/10 text-[#00C4A7] rounded-lg text-sm hover:bg-[#00C4A7]/20 transition-colors"
+                    >
+                      Add to Reports
+                    </button>
+                    <button
+                      onClick={() => setExpandedChart('vendor-performance')}
+                      className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                      title="Expand"
+                    >
+                      <ArrowsPointingOutIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={vendorPerformanceData} layout="vertical">
                     <XAxis type="number" domain={[0, 100]} stroke="#6B7280" />
@@ -319,10 +385,7 @@ export default function AnalyticsPage() {
               <p className="text-gray-400 text-sm mb-6">{insight.description}</p>
               <div className="flex justify-end gap-4">
                 <button className="px-4 py-2 bg-[#00C4A7] text-white rounded-lg text-sm hover:bg-[#00C4A7]/90 transition-colors">
-                  View
-                </button>
-                <button className="px-4 py-2 bg-[#232834] text-white rounded-lg text-sm hover:bg-[#2A2F38] transition-colors">
-                  Ignore
+                  Deep Search with Galaxy AI
                 </button>
               </div>
             </div>

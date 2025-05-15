@@ -1,272 +1,338 @@
 'use client';
 
-import { useState } from 'react';
-import { MagnifyingGlassIcon, ArrowDownTrayIcon, PencilIcon, ShareIcon, Squares2X2Icon, ListBulletIcon, ViewColumnsIcon, XMarkIcon } from '@heroicons/react/24/outline';
-
-interface Report {
-  id: number;
-  title: string;
-  author: string;
-  timeAgo: string;
-  fileName: string;
-  tags: string[];
-  source: 'ai' | 'manual';
-}
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { 
+  MagnifyingGlassIcon,
+  ArrowDownTrayIcon,
+  PencilIcon,
+  ShareIcon,
+  Squares2X2Icon,
+  XMarkIcon,
+  RocketLaunchIcon,
+  ListBulletIcon
+} from '@heroicons/react/24/outline';
+import GenerateReportModal from '@/components/reports/GenerateReportModal';
+import ReportDetail from '@/components/reports/ReportDetail';
+import RecentUploads from '@/components/reports/RecentUploads';
+import NewReportCanvas from '@/components/reports/NewReportCanvas';
 
 // Mock data for reports
-const reports: Report[] = [
+const mockReports = [
   {
     id: 1,
-    title: 'DON Test Analysis - March 2025',
-    author: 'John Smith',
-    timeAgo: '2 days ago',
-    fileName: 'Test_001.xlsx',
-    tags: ['DON', 'Corn', 'Monthly'],
-    source: 'manual'
+    title: 'Vendor Failures & SLA Review – Q2',
+    creator: {
+      type: 'AI',
+      name: 'Galaxy AI',
+      timestamp: '2024-05-15'
+    },
+    tags: ['QA', 'Moisture', 'Monthly'],
+    source: 'Galaxy AI',
+    sourceSystem: 'WinLIMS'
   },
   {
     id: 2,
-    title: 'Batch B-005 Compliance Report',
-    author: 'Galaxy AI',
-    timeAgo: '1 week ago',
-    fileName: 'LIMS_Sync_B005',
-    tags: ['Compliance', 'B-005'],
-    source: 'ai'
+    title: 'Inventory Delay Impact Report – May',
+    creator: {
+      type: 'AI',
+      name: 'Galaxy AI',
+      timestamp: '2024-05-08'
+    },
+    tags: ['Inventory', 'Delay'],
+    source: 'Galaxy AI',
+    sourceSystem: 'WinLIMS'
   },
   {
     id: 3,
-    title: 'Aflatoxin Trend Analysis Q1 2025',
-    author: 'Sarah Lee',
-    timeAgo: '2 weeks ago',
-    fileName: 'Test_001.xlsx +1',
-    tags: ['Aflatoxin', 'Trend', 'Quarterly'],
-    source: 'manual'
+    title: 'Starch Retest Spike – Audit Flag',
+    creator: {
+      type: 'User',
+      name: 'Sarah Lee',
+      timestamp: '2024-05-01'
+    },
+    tags: ['Compliance', 'Retest', 'Alert'],
+    source: 'ELN'
   },
   {
     id: 4,
     title: 'Supplier Risk Assessment',
-    author: 'Galaxy AI',
-    timeAgo: '1 month ago',
-    fileName: 'Supplier_Data_2025.xlsx',
+    creator: {
+      type: 'AI',
+      name: 'Galaxy AI',
+      timestamp: '2024-04-15'
+    },
     tags: ['Risk', 'Supplier', 'Automated'],
-    source: 'ai'
+    source: 'Galaxy AI',
+    sourceFile: 'Supplier_Data_2025.xlsx'
   }
 ];
 
-// Recent uploads for AI generation
-const recentUploads = [
-  { title: 'Corn Production 2025', category: 'Agriculture' },
-  { title: 'Supplier Risk Assessment', category: 'Compliance' },
-  { title: 'Q1 Sales Data', category: 'Sales' }
+// Mock data for recent uploads
+const mockUploads = [
+  {
+    id: '1',
+    name: 'Quality_Metrics_May2025.xlsx',
+    type: 'Excel',
+    size: '2.4 MB',
+    uploadedAt: '2 hours ago',
+    uploadedBy: 'John Smith'
+  },
+  {
+    id: '2',
+    name: 'Lab_Analysis_Report_Q2.pdf',
+    type: 'PDF',
+    size: '4.1 MB',
+    uploadedAt: '5 hours ago',
+    uploadedBy: 'Emily Chen'
+  },
+  {
+    id: '3',
+    name: 'Equipment_Calibration_Data.csv',
+    type: 'CSV',
+    size: '1.8 MB',
+    uploadedAt: '1 day ago',
+    uploadedBy: 'Michael Brown'
+  }
 ];
 
-type ViewType = 'list' | 'grid' | 'gallery';
-
 export default function ReportsPage() {
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedCreator, setSelectedCreator] = useState('Created By');
   const [selectedTime, setSelectedTime] = useState('All Time');
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [viewType, setViewType] = useState<ViewType>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedReport, setSelectedReport] = useState<number | null>(null);
+  const [showNewReport, setShowNewReport] = useState(false);
+  const [initialContent, setInitialContent] = useState<string | null>(null);
 
-  // Filter reports based on search and filters
-  const filteredReports = reports.filter((report: Report) => {
-    const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === 'All Types' || report.tags.includes(selectedType);
-    const matchesCreator = selectedCreator === 'Created By' || 
-      (selectedCreator === 'AI Generated' && report.source === 'ai') || 
-      (selectedCreator !== 'AI Generated' && report.source === 'manual');
-    return matchesSearch && matchesType && matchesCreator;
-  });
+  useEffect(() => {
+    // Check if we're coming from chat with new report content
+    if (searchParams.get('new') === 'true') {
+      const content = localStorage.getItem('newReportContent');
+      if (content) {
+        setInitialContent(content);
+        setShowNewReport(true);
+        // Clear the stored content
+        localStorage.removeItem('newReportContent');
+      }
+    }
+    // Check if we're editing an existing report
+    const editReportId = searchParams.get('edit');
+    if (editReportId) {
+      const content = localStorage.getItem('reportContent');
+      const reportId = parseInt(editReportId);
+      if (content && !isNaN(reportId)) {
+        setSelectedReport(reportId);
+        // Store the content to be added to the report
+        localStorage.setItem(`report_${reportId}_pending_content`, content);
+        // Clear the stored content
+        localStorage.removeItem('reportContent');
+        localStorage.removeItem('targetReportId');
+      }
+    }
+  }, [searchParams]);
 
-  const handleGenerateReport = () => {
-    // Implementation for generating report
-    console.log('Generating report with prompt:', aiPrompt);
-    setShowGenerateModal(false);
+  const handleGenerateReport = (prompt: string) => {
+    console.log('Generating report with prompt:', prompt);
+    // Add logic to generate report using Galaxy AI
   };
 
-  // Render the AI generation modal
-  const renderGenerateModal = () => {
-    if (!showGenerateModal) return null;
+  if (showNewReport) {
+    return <NewReportCanvas 
+      onClose={() => {
+        setShowNewReport(false);
+        setInitialContent(null);
+      }}
+      initialContent={initialContent}
+    />;
+  }
 
-    return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-[#1A1F2E] rounded-xl w-[480px] p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-white text-xl font-medium">Generate with Galaxy AI</h2>
-            <button
-              onClick={() => setShowGenerateModal(false)}
-              className="p-2 hover:bg-[#232834] rounded-lg transition-colors"
-            >
-              <XMarkIcon className="h-5 w-5 text-gray-400" />
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-white text-sm mb-2">Enter Your Prompt</label>
-              <textarea
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Describe the report you want to generate (e.g., 'Analyze corn production trends for Q1 2025')"
-                className="w-full h-32 bg-[#232834] text-white rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
-              />
-            </div>
-
-            <div>
-              <h3 className="text-white text-sm mb-2">Recent Uploads</h3>
-              <div className="space-y-2">
-                {recentUploads.map((upload, index) => (
-                  <button
-                    key={index}
-                    className="w-full text-left bg-[#232834] hover:bg-[#2A2F38] p-3 rounded-lg transition-colors"
-                  >
-                    <p className="text-white text-sm">{upload.title}</p>
-                    <p className="text-gray-400 text-xs">{upload.category}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleGenerateReport}
-              className="w-full bg-[#00C4A7] text-white py-2 rounded-lg text-sm hover:bg-[#00C4A7]/90 transition-colors"
-            >
-              Generate Report
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  if (selectedReport !== null) {
+    const report = mockReports.find(r => r.id === selectedReport);
+    if (report) {
+      return <ReportDetail report={report} onClose={() => setSelectedReport(null)} />;
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-[#121620]">
-      {/* Fixed width container for header and search */}
-      <div className="w-full max-w-[1440px] mx-auto px-6 py-5">
+    <div className="flex-1 bg-[#121620] p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <h1 className="text-2xl font-semibold text-white">Your Reports</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowGenerateModal(true)}
-              className="px-4 py-2 bg-[#00C4A7] text-white rounded-lg text-sm hover:bg-[#00C4A7]/90 transition-colors"
+              className="flex-1 sm:flex-none px-4 py-2 bg-[#00C4A7] text-white rounded-lg text-sm hover:bg-[#00C4A7]/90 transition-colors flex items-center justify-center gap-2"
             >
-              Generate with Galaxy AI
+              <RocketLaunchIcon className="h-5 w-5" />
+              <span className="whitespace-nowrap">Generate with Galaxy AI</span>
             </button>
-            <button className="px-4 py-2 bg-[#2E5DEF] text-white rounded-lg text-sm hover:bg-[#2E5DEF]/90 transition-colors">
+            <button
+              onClick={() => setShowNewReport(true)}
+              className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+            >
               New Report
             </button>
           </div>
         </div>
 
-        {/* Search and Filters - Fixed width */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-1">
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <div className="relative flex-1 mb-4">
             <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search reports..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#1A1F2E] text-white pl-10 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7] placeholder-gray-400"
+              className="w-full bg-[#1A1F2E] text-white pl-10 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
             />
           </div>
 
-          <button className="px-4 py-2 bg-[#1A1F2E] text-white rounded-lg text-sm hover:bg-[#232834] transition-colors whitespace-nowrap">
-            All Types
-          </button>
-
-          <button className="px-4 py-2 bg-[#1A1F2E] text-white rounded-lg text-sm hover:bg-[#232834] transition-colors whitespace-nowrap">
-            Created By
-          </button>
-
-          <button className="px-4 py-2 bg-[#1A1F2E] text-white rounded-lg text-sm hover:bg-[#232834] transition-colors whitespace-nowrap">
-            All Time
-          </button>
-
-          {/* View Toggle */}
-          <div className="flex bg-[#1A1F2E] rounded-lg p-1">
-            <button
-              onClick={() => setViewType('list')}
-              className={`p-1.5 rounded ${viewType === 'list' ? 'bg-[#232834]' : 'hover:bg-[#232834]'} transition-colors`}
+          <div className="flex flex-wrap gap-4">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="flex-1 sm:flex-none bg-[#1A1F2E] text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
             >
-              <ListBulletIcon className="h-5 w-5 text-gray-400" />
-            </button>
-            <button
-              onClick={() => setViewType('grid')}
-              className={`p-1.5 rounded ${viewType === 'grid' ? 'bg-[#232834]' : 'hover:bg-[#232834]'} transition-colors`}
+              <option>All Types</option>
+              <option>Analytics</option>
+              <option>Compliance</option>
+              <option>Quality Control</option>
+            </select>
+
+            <select
+              value={selectedCreator}
+              onChange={(e) => setSelectedCreator(e.target.value)}
+              className="flex-1 sm:flex-none bg-[#1A1F2E] text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
             >
-              <Squares2X2Icon className="h-5 w-5 text-gray-400" />
-            </button>
-            <button
-              onClick={() => setViewType('gallery')}
-              className={`p-1.5 rounded ${viewType === 'gallery' ? 'bg-[#232834]' : 'hover:bg-[#232834]'} transition-colors`}
+              <option>Created By</option>
+              <option>Galaxy AI</option>
+              <option>Team Members</option>
+            </select>
+
+            <select
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+              className="flex-1 sm:flex-none bg-[#1A1F2E] text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
             >
-              <ViewColumnsIcon className="h-5 w-5 text-gray-400" />
-            </button>
+              <option>All Time</option>
+              <option>Last Week</option>
+              <option>Last Month</option>
+              <option>Last Quarter</option>
+            </select>
+
+            <div className="flex items-center gap-2 bg-[#1A1F2E] rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded ${
+                  viewMode === 'grid'
+                    ? 'bg-[#232834] text-white'
+                    : 'text-gray-400 hover:text-white'
+                } transition-colors`}
+              >
+                <Squares2X2Icon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded ${
+                  viewMode === 'list'
+                    ? 'bg-[#232834] text-white'
+                    : 'text-gray-400 hover:text-white'
+                } transition-colors`}
+              >
+                <ListBulletIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Reports section with dynamic layout */}
-      <div className="w-full max-w-[1440px] mx-auto px-6">
-        <div 
-          className={`grid gap-3 ${
-            viewType === 'list' 
-              ? 'grid-cols-1' 
-              : viewType === 'grid' 
-                ? 'grid-cols-2' 
-                : 'grid-cols-3'
-          }`}
-        >
-          {filteredReports.map((report) => (
+        {/* Reports Grid/List */}
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+          {mockReports.map((report) => (
             <div
               key={report.id}
-              className="bg-[#1A1F2E] rounded-xl p-4 hover:bg-[#232834] transition-colors"
+              onClick={() => setSelectedReport(report.id)}
+              className={`bg-[#1A1F2E] rounded-xl p-4 sm:p-6 cursor-pointer hover:bg-[#232834] transition-colors ${
+                viewMode === 'list' ? 'flex items-start gap-4' : ''
+              }`}
             >
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h3 className="text-white text-base font-medium">{report.title}</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <span>{report.author}</span>
-                    <span>•</span>
-                    <span>{report.timeAgo}</span>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white text-lg font-medium mb-2 truncate">
+                  {report.title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-400">
+                  <div className="flex items-center gap-1">
+                    {report.creator.type === 'AI' ? (
+                      <RocketLaunchIcon className="h-4 w-4 text-[#00C4A7] flex-shrink-0" />
+                    ) : null}
+                    <span>{report.creator.name}</span>
                   </div>
-                  <div className="text-sm text-[#4B5563]">{report.fileName}</div>
-                  <div className="flex flex-wrap gap-2">
-                    {report.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2.5 py-1 bg-[#232834] text-white text-xs rounded-lg"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  <span className="w-1 h-1 rounded-full bg-gray-700"></span>
+                  <span>{new Date(report.creator.timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button className="p-2 text-gray-400 hover:bg-[#232834] rounded-lg transition-colors">
+
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {report.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="bg-[#232834] text-white/80 px-3 py-1 rounded-lg text-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 mt-4 text-sm">
+                  <span className="text-gray-400">Source:</span>
+                  <span className="text-[#00C4A7]">{report.source}</span>
+                  {report.sourceSystem && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-700"></span>
+                      <span className="text-gray-400">{report.sourceSystem}</span>
+                    </>
+                  )}
+                  {report.sourceFile && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-700"></span>
+                      <span className="text-gray-400">{report.sourceFile}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {viewMode === 'list' && (
+                <div className="flex items-center gap-2">
+                  <button className="p-2 text-gray-400 hover:text-white transition-colors">
                     <ArrowDownTrayIcon className="h-5 w-5" />
                   </button>
-                  <button className="p-2 text-gray-400 hover:bg-[#232834] rounded-lg transition-colors">
+                  <button className="p-2 text-gray-400 hover:text-white transition-colors">
                     <PencilIcon className="h-5 w-5" />
                   </button>
-                  <button className="p-2 text-gray-400 hover:bg-[#232834] rounded-lg transition-colors">
+                  <button className="p-2 text-gray-400 hover:text-white transition-colors">
                     <ShareIcon className="h-5 w-5" />
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Generate Modal */}
-      {renderGenerateModal()}
-    </main>
+      {/* Generate Report Modal */}
+      <GenerateReportModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        onGenerate={handleGenerateReport}
+      />
+    </div>
   );
 } 

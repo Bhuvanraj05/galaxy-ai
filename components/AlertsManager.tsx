@@ -9,8 +9,16 @@ import {
   ArrowTopRightOnSquareIcon,
   PlusIcon,
   AdjustmentsHorizontalIcon,
-  XMarkIcon
+  XMarkIcon,
+  XCircleIcon,
+  ClipboardDocumentListIcon,
+  DocumentTextIcon,
+  ChevronDownIcon,
+  AcademicCapIcon,
+  BeakerIcon,
+  ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import DocumentViewer from './alerts/DocumentViewer';
 
 // Alert priority levels
 type AlertPriority = 'high' | 'medium' | 'low' | 'info';
@@ -25,75 +33,82 @@ type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 interface Alert {
   id: string;
   title: string;
-  description: string;
-  source: string;
-  timestamp: Date;
-  priority: AlertPriority;
-  category: AlertCategory;
-  status: AlertStatus;
+  message: string;
+  severity: 'critical' | 'warning' | 'info' | 'success';
+  timestamp: string;
+  linkedDoc?: {
+    name: string;
+    path: string;
+  };
 }
 
 // Mock alert data
-const mockAlerts: Alert[] = [
+const alerts: Alert[] = [
   {
     id: '1',
-    title: 'QC Deviation Detected',
-    description: 'Batch #A2938 pH test results outside of specification range (4.5-6.5). Measured value: 6.8',
-    source: 'LIMS Data',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    priority: 'high',
-    category: 'qc',
-    status: 'active'
+    title: 'Calibration Overdue',
+    message: '⚠️ Analytical Balance (ML204) calibration is overdue by 5 days — last calibrated on 2025-04-01 per [Calibration Log – QA Lab]. Immediate recalibration required before next moisture test.',
+    severity: 'critical',
+    timestamp: '10 minutes ago',
+    linkedDoc: {
+      name: 'Calibration Log - QA Lab Equipment Records',
+      path: '/components/assets/labresources/QA_Lab_Equipment_Calibration_Log_2025.pdf'
+    }
   },
   {
     id: '2',
-    title: 'Calibration Due',
-    description: 'pH Meter #PM-103 calibration due in 3 days. Last calibrated: 2023-04-15',
-    source: 'Equipment Records',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    priority: 'medium',
-    category: 'equipment',
-    status: 'active'
+    title: 'Test Result Outside SOP Range',
+    message: '🚨 Moisture result of 14.7% for Corn Batch #C-4456 exceeds SOP-LAB-QC-014's limit of 13.0%. Retest and CAPA action completed, see [CAPA Report – Moisture Deviation].',
+    severity: 'critical',
+    timestamp: '30 minutes ago',
+    linkedDoc: {
+      name: 'CAPA Report - Moisture Analysis Deviation',
+      path: '/components/assets/labresources/CAPA_Moisture_Analysis_Report_C4456.pdf'
+    }
   },
   {
     id: '3',
-    title: 'Low Inventory',
-    description: 'Reagent R-291 (Methylene Blue Solution) is below minimum threshold. Current: 250mL, Minimum: 500mL',
-    source: 'Inventory System',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-    priority: 'medium',
-    category: 'inventory',
-    status: 'acknowledged'
+    title: 'Incomplete ELN Record',
+    message: '📋 Incomplete ELN entry detected for moisture test on Batch #C-4483. Technician signature missing as noted in [Audit Report – QC Lab Q1 2025].',
+    severity: 'warning',
+    timestamp: '1 hour ago',
+    linkedDoc: {
+      name: 'QC Laboratory Audit Report - Q1 2025',
+      path: '/components/assets/labresources/QC_Lab_Audit_Report_Q1_2025.pdf'
+    }
   },
   {
     id: '4',
-    title: 'SOP Updated',
-    description: 'Standard Operating Procedure for Sample Preparation (SOP-023) has been updated. Review required.',
-    source: 'Document Management',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    priority: 'low',
-    category: 'compliance',
-    status: 'active'
+    title: 'Incoming Raw Material Approval',
+    message: '✅ New wheat shipment (Batch WHT-HRS-4522) passed all quality checks. Moisture: 12.2%, Protein: 13.4%. Accepted by QA, see [Vendor Inspection Report – AgriPure].',
+    severity: 'success',
+    timestamp: '2 hours ago',
+    linkedDoc: {
+      name: 'Vendor Quality Inspection Report - AgriPure Wheat',
+      path: '/components/assets/labresources/Vendor_Quality_Inspection_AgriPure_WHT4522.pdf'
+    }
   },
   {
     id: '5',
-    title: 'Audit Preparation',
-    description: 'Annual ISO audit scheduled in 2 weeks. Pre-audit checklist generated.',
-    source: 'QMS',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-    priority: 'info',
-    category: 'compliance',
-    status: 'resolved'
+    title: 'Low Stock Warning',
+    message: '📦 Low stock alert: Drying Reagent A inventory at 1.5L as of March 31. Review needed per [Inventory Log – QC Lab, March 2025].',
+    severity: 'warning',
+    timestamp: '3 hours ago',
+    linkedDoc: {
+      name: 'QC Laboratory Inventory Report - March 2025',
+      path: '/components/assets/labresources/QC_Lab_Inventory_Report_March_2025.pdf'
+    }
   },
   {
     id: '6',
-    title: 'Sample Backlog',
-    description: 'Increasing trend in unprocessed samples detected. Current backlog: 35 samples (18% above normal)',
-    source: 'LIMS Analytics',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-    priority: 'medium',
-    category: 'qc',
-    status: 'active'
+    title: 'Training Record Check Passed',
+    message: '🎓 Technician Emily Saunders completed training on SOP-LAB-QC-014 and passed with 92%. Verified and archived in [Training Record – Emily Saunders, QC Lab].',
+    severity: 'success',
+    timestamp: '4 hours ago',
+    linkedDoc: {
+      name: 'Personnel Training Record - Emily Saunders',
+      path: '/components/assets/labresources/Personnel_Training_Record_ES_2025.pdf'
+    }
   }
 ];
 
@@ -115,404 +130,114 @@ const categoryData = {
 };
 
 export default function AlertsManager() {
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
-  const [statusFilter, setStatusFilter] = useState<AlertStatus | 'all'>('active');
-  const [priorityFilter, setPriorityFilter] = useState<AlertPriority | 'all'>('all');
-  const [categoryFilter, setCategoryFilter] = useState<AlertCategory | 'all'>('all');
-  const [isCreateAlertOpen, setIsCreateAlertOpen] = useState(false);
+  const [selectedSeverity, setSelectedSeverity] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDoc, setSelectedDoc] = useState<{
+    name: string;
+    path: string;
+  } | null>(null);
 
-  // Filter alerts based on selected filters
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+      case 'warning':
+        return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
+      case 'success':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      default:
+        return <ClipboardDocumentListIcon className="h-5 w-5 text-blue-500" />;
+    }
+  };
+
+  const getSeverityClass = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'warning':
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'success':
+        return 'bg-green-500/10 text-green-500 border-green-500/20';
+      default:
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    }
+  };
+
   const filteredAlerts = alerts.filter(alert => {
-    const matchesStatus = statusFilter === 'all' || alert.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || alert.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || alert.category === categoryFilter;
-    return matchesStatus && matchesPriority && matchesCategory;
+    const matchesSeverity = selectedSeverity === 'all' || alert.severity === selectedSeverity;
+    const matchesSearch = alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alert.message.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSeverity && matchesSearch;
   });
 
-  const handleAcknowledge = (alertId: string) => {
-    setAlerts(
-      alerts.map(alert => 
-        alert.id === alertId 
-          ? { ...alert, status: 'acknowledged' } 
-          : alert
-      )
-    );
-  };
-
-  const handleResolve = (alertId: string) => {
-    setAlerts(
-      alerts.map(alert => 
-        alert.id === alertId 
-          ? { ...alert, status: 'resolved' } 
-          : alert
-      )
-    );
-  };
-
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) {
-      return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
-    }
-    if (diffHours < 24) {
-      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-    }
-    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  };
-
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Alert Filters */}
-      <div className="lg:col-span-1">
-        <div className="card h-full">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Filters
-            </h2>
-            <button 
-              className="text-primary-600 hover:text-primary-800 text-sm font-medium"
-              onClick={() => {
-                setStatusFilter('all');
-                setPriorityFilter('all');
-                setCategoryFilter('all');
-              }}
+    <div className="flex-1 bg-[#121620] p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="text-2xl font-semibold text-white">Alerts & Notifications</h1>
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedSeverity}
+              onChange={(e) => setSelectedSeverity(e.target.value)}
+              className="bg-[#1A1F2E] text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7]"
             >
-              Reset
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {/* Status Filter */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Status
-              </h3>
-              <div className="space-y-2">
-                {(['all', 'active', 'acknowledged', 'resolved'] as const).map((status) => (
-                  <label key={status} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="status"
-                      checked={statusFilter === status}
-                      onChange={() => setStatusFilter(status)}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">
-                      {status}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Priority Filter */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Priority
-              </h3>
-              <div className="space-y-2">
-                {(['all', 'high', 'medium', 'low', 'info'] as const).map((priority) => (
-                  <label key={priority} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priority"
-                      checked={priorityFilter === priority}
-                      onChange={() => setPriorityFilter(priority)}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 capitalize">
-                      {priority === 'all' ? 'All Priorities' : priorityData[priority].label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Category
-              </h3>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="category"
-                    checked={categoryFilter === 'all'}
-                    onChange={() => setCategoryFilter('all')}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    All Categories
-                  </span>
-                </label>
-                {(Object.keys(categoryData) as AlertCategory[]).map((category) => (
-                  <label key={category} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="category"
-                      checked={categoryFilter === category}
-                      onChange={() => setCategoryFilter(category)}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                      {categoryData[category].label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
-              <button 
-                className="btn-primary w-full flex items-center justify-center"
-                onClick={() => setIsCreateAlertOpen(true)}
-              >
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Create Custom Alert
-              </button>
-            </div>
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="warning">Warning</option>
+              <option value="info">Info</option>
+              <option value="success">Success</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Search alerts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-[#1A1F2E] text-white px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C4A7] w-full sm:w-auto"
+            />
           </div>
         </div>
-      </div>
 
-      {/* Alert List */}
-      <div className="lg:col-span-3">
-        <div className="card h-full">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Alerts
-            </h2>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {filteredAlerts.length} result{filteredAlerts.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-
-          {filteredAlerts.length > 0 ? (
-            <div className="space-y-4">
-              {filteredAlerts.map((alert) => (
-                <div 
-                  key={alert.id}
-                  className={`border rounded-lg p-4 ${
-                    alert.status === 'resolved'
-                      ? 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50'
-                      : alert.priority === 'high'
-                        ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20'
-                        : alert.priority === 'medium'
-                          ? 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20'
-                          : alert.priority === 'low'
-                            ? 'border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20'
-                  }`}
-                >
-                  <div className="flex items-start">
-                    <div className={`mt-0.5 flex-shrink-0 w-5 h-5 ${
-                      alert.status === 'resolved'
-                        ? 'text-gray-400 dark:text-gray-500'
-                        : alert.priority === 'high'
-                          ? 'text-red-600 dark:text-red-400'
-                          : alert.priority === 'medium'
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : alert.priority === 'low'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-green-600 dark:text-green-400'
-                    }`}>
-                      <BellAlertIcon />
-                    </div>
-                    
-                    <div className="ml-3 flex-1">
-                      <div className="flex justify-between">
-                        <h3 className={`text-sm font-medium ${
-                          alert.status === 'resolved'
-                            ? 'text-gray-500 dark:text-gray-400'
-                            : 'text-gray-900 dark:text-white'
-                        }`}>
-                          {alert.title}
-                        </h3>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatTimestamp(alert.timestamp)}
-                        </span>
-                      </div>
-                      
-                      <p className={`mt-1 text-sm ${
-                        alert.status === 'resolved'
-                          ? 'text-gray-500 dark:text-gray-400'
-                          : 'text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {alert.description}
-                      </p>
-                      
-                      <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            alert.status === 'resolved'
-                              ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300'
-                              : alert.priority === 'high'
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                                : alert.priority === 'medium'
-                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
-                                  : alert.priority === 'low'
-                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                          }`}>
-                            {priorityData[alert.priority].label}
-                          </span>
-                          
-                          <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
-                          
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Source: {alert.source}
-                          </span>
-                          
-                          <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
-                          
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            alert.status === 'resolved'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                              : alert.status === 'acknowledged'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
-                          }`}>
-                            {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          {alert.status === 'active' && (
-                            <button
-                              onClick={() => handleAcknowledge(alert.id)}
-                              className="text-xs text-primary-600 hover:text-primary-800 font-medium"
-                            >
-                              Acknowledge
-                            </button>
-                          )}
-                          
-                          {(alert.status === 'active' || alert.status === 'acknowledged') && (
-                            <button
-                              onClick={() => handleResolve(alert.id)}
-                              className="text-xs text-primary-600 hover:text-primary-800 font-medium"
-                            >
-                              Resolve
-                            </button>
-                          )}
-                          
-                          <button className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center">
-                            <ArrowTopRightOnSquareIcon className="h-3 w-3 mr-1" />
-                            Details
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+        {/* Alerts Grid */}
+        <div className="grid grid-cols-1 gap-4">
+          {filteredAlerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={`bg-[#1A1F2E] rounded-xl p-4 sm:p-6 border ${getSeverityClass(alert.severity)}`}
+            >
+              <div className="flex items-start gap-4">
+                <div className="mt-1">{getSeverityIcon(alert.severity)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-medium text-white">{alert.title}</h3>
+                    <span className="text-sm text-gray-400 whitespace-nowrap">
+                      {alert.timestamp}
+                    </span>
                   </div>
+                  <p className="mt-2 text-gray-300 text-sm">{alert.message}</p>
+                  {alert.linkedDoc && (
+                    <button
+                      onClick={() => setSelectedDoc(alert.linkedDoc)}
+                      className="mt-4 flex items-center gap-2 text-sm text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors"
+                    >
+                      <DocumentTextIcon className="h-5 w-5" />
+                      <span>View Document: {alert.linkedDoc.name}</span>
+                    </button>
+                  )}
                 </div>
-              ))}
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <BellAlertIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No alerts found</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                There are no alerts matching your current filters.
-              </p>
-            </div>
-          )}
+          ))}
         </div>
       </div>
 
-      {/* Create Alert Modal */}
-      {isCreateAlertOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Create Custom Alert
-              </h2>
-              <button 
-                onClick={() => setIsCreateAlertOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="alert-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Alert Title
-                </label>
-                <input
-                  type="text"
-                  id="alert-title"
-                  className="w-full rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-gray-900 dark:text-white"
-                  placeholder="Enter alert title"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="alert-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  id="alert-description"
-                  rows={3}
-                  className="w-full rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-gray-900 dark:text-white"
-                  placeholder="Enter alert description"
-                ></textarea>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="alert-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Priority
-                  </label>
-                  <select
-                    id="alert-priority"
-                    className="w-full rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-gray-900 dark:text-white"
-                  >
-                    <option value="high">High Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="low">Low Priority</option>
-                    <option value="info">Information</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label htmlFor="alert-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Category
-                  </label>
-                  <select
-                    id="alert-category"
-                    className="w-full rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-gray-900 dark:text-white"
-                  >
-                    <option value="qc">Quality Control</option>
-                    <option value="compliance">Compliance</option>
-                    <option value="equipment">Equipment</option>
-                    <option value="inventory">Inventory</option>
-                    <option value="system">System</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 flex justify-end space-x-3">
-              <button 
-                onClick={() => setIsCreateAlertOpen(false)}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <button className="btn-primary">
-                Create Alert
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Document Viewer */}
+      <DocumentViewer
+        isOpen={!!selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        documentPath={selectedDoc?.path || ''}
+        documentName={selectedDoc?.name || ''}
+      />
     </div>
   );
 } 

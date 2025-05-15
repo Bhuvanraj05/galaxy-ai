@@ -8,7 +8,7 @@ Galaxy AI is an AI-driven lab intelligence platform for laboratory management an
 - **Dynamic Reports**: Auto-generated and custom reports based on your lab data
 - **Analytics Dashboard**: Visualize trends, anomalies, and forecasts
 - **Multiple Data Source Integration**: Connect with LIMS, MES, SCADA, ERP, ELN, QMS and more
-- **Lab Resource Management**: Upload and manage critical lab documents
+- **Knowledge base Management**: Upload and manage critical lab documents
 - **Alerts & Notifications**: Auto-generated alerts based on data patterns
 
 ## Tech Stack
@@ -58,7 +58,7 @@ When first accessing Galaxy AI, users will go through an onboarding process to:
 2. Choose their role
 3. Map industry categories
 4. Connect data sources
-5. Upload lab resources
+5. Upload knowledge base
 
 ### Chat Interface
 

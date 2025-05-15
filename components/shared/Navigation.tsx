@@ -46,7 +46,7 @@ const navigationItems = [
     icon: ClockIcon
   },
   {
-    name: 'Lab Resources',
+    name: 'Knowledge base',
     href: '/lab-resources',
     icon: BeakerIcon
   },

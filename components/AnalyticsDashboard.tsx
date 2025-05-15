@@ -5,7 +5,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
-import { LightBulbIcon, BoltIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { LightBulbIcon, BoltIcon, ExclamationTriangleIcon, ShareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import type { ForwardRefExoticComponent, SVGProps, RefAttributes } from 'react';
 
 interface DataPoint {
@@ -75,6 +75,19 @@ const insights: Insight[] = [
 
 export default function AnalyticsDashboard() {
   const [timeframe, setTimeframe] = useState('year');
+  
+  // Add handlers for export and share
+  const handleExport = () => {
+    console.log('Exporting chart');
+  };
+
+  const handleShare = () => {
+    console.log('Sharing chart');
+  };
+
+  const handleAddToReports = () => {
+    console.log('Adding to reports');
+  };
   
   // Separate actual and forecast data
   const actualData = forecastData.filter(d => !d.forecast);
@@ -167,9 +180,33 @@ export default function AnalyticsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sample Volume with Forecast */}
         <div className="card">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
-            Sample Volume with Forecast
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+              Sample Volume with Forecast
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExport}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Export"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleShare}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Share"
+              >
+                <ShareIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleAddToReports}
+                className="px-3 py-1.5 bg-[#00C4A7]/10 text-[#00C4A7] rounded-lg text-sm hover:bg-[#00C4A7]/20 transition-colors"
+              >
+                Add to Reports
+              </button>
+            </div>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={forecastData}>
@@ -217,9 +254,33 @@ export default function AnalyticsDashboard() {
 
         {/* QC Failure Rate */}
         <div className="card">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
-            QC Failure Rate
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+              QC Failures Over Time
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExport}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Export"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleShare}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Share"
+              >
+                <ShareIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleAddToReports}
+                className="px-3 py-1.5 bg-[#00C4A7]/10 text-[#00C4A7] rounded-lg text-sm hover:bg-[#00C4A7]/20 transition-colors"
+              >
+                Add to Reports
+              </button>
+            </div>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
@@ -237,9 +298,33 @@ export default function AnalyticsDashboard() {
 
         {/* Average Turnaround Time */}
         <div className="card">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
-            Average Turnaround Time (Days)
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+              Average Processing Time
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExport}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Export"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleShare}
+                className="p-2 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                title="Share"
+              >
+                <ShareIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleAddToReports}
+                className="px-3 py-1.5 bg-[#00C4A7]/10 text-[#00C4A7] rounded-lg text-sm hover:bg-[#00C4A7]/20 transition-colors"
+              >
+                Add to Reports
+              </button>
+            </div>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData}>

@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   HandThumbUpIcon, 
   HandThumbDownIcon, 
   ClipboardIcon, 
   ArrowPathIcon,
-  CheckIcon
+  CheckIcon,
+  DocumentPlusIcon,
+  ChevronDownIcon,
+  FolderPlusIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
 
 interface ChatMessageProps {
@@ -16,6 +21,14 @@ interface ChatMessageProps {
   onFeedback?: (type: 'like' | 'dislike') => void;
 }
 
+// Mock data for existing reports - replace with actual data
+const existingReports = [
+  { id: 1, name: 'Q1 Analysis Report', lastEdited: '2 days ago' },
+  { id: 2, name: 'Equipment Maintenance Summary', lastEdited: '1 week ago' },
+  { id: 3, name: 'Safety Compliance Review', lastEdited: '2 weeks ago' },
+  { id: 4, name: 'Monthly Quality Metrics', lastEdited: '1 month ago' },
+];
+
 export default function ChatMessage({
   content,
   role,
@@ -24,8 +37,21 @@ export default function ChatMessage({
   onCopy,
   onFeedback
 }: ChatMessageProps) {
+  const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'like' | 'dislike' | null>(null);
+  const [showReportOptions, setShowReportOptions] = useState(false);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowReportOptions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -45,6 +71,21 @@ export default function ChatMessage({
       setFeedback(type);
       onFeedback?.(type);
     }
+  };
+
+  const handleNewReport = () => {
+    localStorage.setItem('newReportContent', content);
+    router.push('/reports?new=true');
+    setShowReportOptions(false);
+  };
+
+  const handleAddToExistingReport = (reportId: number) => {
+    // Store the content and report ID in localStorage
+    localStorage.setItem('reportContent', content);
+    localStorage.setItem('targetReportId', reportId.toString());
+    // Navigate to the report page
+    router.push(`/reports?edit=${reportId}`);
+    setShowReportOptions(false);
   };
 
   return (
@@ -111,6 +152,65 @@ export default function ChatMessage({
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
+
+            <div className="relative ml-auto" ref={dropdownRef}>
+              <button
+                onClick={() => setShowReportOptions(!showReportOptions)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-[#232834] text-white hover:bg-[#2A2F38] transition-colors"
+              >
+                <DocumentPlusIcon className="h-5 w-5" />
+                Add to Report
+                <ChevronDownIcon className="h-4 w-4" />
+              </button>
+
+              {showReportOptions && (
+                <div 
+                  ref={dropdownRef}
+                  className="absolute right-0 mt-2 w-72 bg-[#232834] rounded-lg shadow-xl border border-gray-700 overflow-hidden z-50"
+                >
+                  <div className="p-2">
+                    <button
+                      onClick={handleNewReport}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white hover:bg-[#2A2F38] transition-colors"
+                    >
+                      <DocumentPlusIcon className="h-5 w-5 text-[#00C4A7]" />
+                      <div className="text-left">
+                        <div className="font-medium">Create New Report</div>
+                        <div className="text-xs text-gray-400">Start a new report with this content</div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="border-t border-gray-700">
+                    <div className="px-3 py-2">
+                      <div className="text-sm font-medium text-white mb-1">Add to Existing Report</div>
+                      <div className="text-xs text-gray-400">Select a report to add this content</div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {existingReports.map((report) => (
+                        <button
+                          key={report.id}
+                          onClick={() => handleAddToExistingReport(report.id)}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#2A2F38] transition-colors"
+                        >
+                          <FolderPlusIcon className="h-5 w-5 text-gray-400" />
+                          <div className="text-left">
+                            <div className="text-white">{report.name}</div>
+                            <div className="text-xs text-gray-400">Last edited {report.lastEdited}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {role === 'assistant' && (
+              <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
+                <ShareIcon className="h-5 w-5" />
+              </button>
+            )}
           </div>
         )}
       </div>

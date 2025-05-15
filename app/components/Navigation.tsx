@@ -20,7 +20,7 @@ const navigationItems = [
   { name: 'Custom Report', href: '/custom-report', icon: DocumentDuplicateIcon },
   { name: 'Alerts', href: '/alerts', icon: ExclamationCircleIcon },
   { name: 'Activity Log', href: '/activity-log', icon: ClockIcon },
-  { name: 'Lab Resources', href: '/lab-resources', icon: DocumentTextIcon },
+  { name: 'Knowledge base', href: '/lab-resources', icon: DocumentTextIcon },
   { name: 'Integrations', href: '/integrations', icon: LinkIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon }
 ];

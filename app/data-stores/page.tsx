@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   DocumentIcon, 
   ArrowPathIcon,
   ChevronRightIcon,
   CloudArrowUpIcon,
-  DocumentArrowDownIcon
+  DocumentArrowDownIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
+import ImportModal from '@/components/data-stores/ImportModal';
 
 // Data source tabs
 const dataSources = [
@@ -27,7 +30,6 @@ const mockDatasets = {
       entries: 3200,
       lastSynced: '15 mins ago',
       status: 'Syncing',
-      aiReadiness: 'AI Linking',
       action: 'Syncing'
     },
     {
@@ -35,7 +37,6 @@ const mockDatasets = {
       entries: 780,
       lastSynced: '2 hrs ago',
       status: 'Ready',
-      aiReadiness: 'AI Ready',
       action: 'Ask Galaxy AI'
     },
     {
@@ -43,7 +44,6 @@ const mockDatasets = {
       entries: 620,
       lastSynced: '20 mins ago',
       status: 'Ready',
-      aiReadiness: 'AI Ready',
       action: 'Ask Galaxy AI'
     }
   ],
@@ -53,7 +53,6 @@ const mockDatasets = {
       entries: 1,
       lastSynced: '25 mins ago',
       status: 'Ready',
-      aiReadiness: 'RAG Ready',
       action: 'Ask Galaxy AI'
     },
     {
@@ -61,7 +60,6 @@ const mockDatasets = {
       entries: 1,
       lastSynced: '30 mins ago',
       status: 'Ready',
-      aiReadiness: 'Compilation Tag',
       action: 'View in Canvas'
     },
     {
@@ -69,7 +67,6 @@ const mockDatasets = {
       entries: 1,
       lastSynced: '1 hr ago',
       status: 'Ready',
-      aiReadiness: 'Editable',
       action: 'Add to Audit Prep'
     }
   ],
@@ -79,7 +76,6 @@ const mockDatasets = {
       entries: 3200,
       lastSynced: '10 mins ago',
       status: 'Ready',
-      aiReadiness: 'AI Ready',
       action: 'Ask Galaxy AI'
     },
     {
@@ -87,7 +83,6 @@ const mockDatasets = {
       entries: 530,
       lastSynced: '8 mins ago',
       status: 'Ready',
-      aiReadiness: 'AI Ready',
       action: 'Ask Galaxy AI'
     }
   ],
@@ -95,6 +90,7 @@ const mockDatasets = {
 };
 
 export default function DataStores() {
+  const router = useRouter();
   const [activeSource, setActiveSource] = useState('mes');
   const [isUploading, setIsUploading] = useState(false);
   const [datasets, setDatasets] = useState(mockDatasets);
@@ -104,6 +100,7 @@ export default function DataStores() {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isCanvasOpen, setIsCanvasOpen] = useState(false);
   const [canvasData, setCanvasData] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToastMessage(message);
@@ -145,7 +142,6 @@ export default function DataStores() {
             entries: Math.floor(Math.random() * 1000) + 100,
             lastSynced: 'Just now',
             status: 'Ready',
-            aiReadiness: 'AI Ready',
             action: 'Analyze'
           });
         });
@@ -168,10 +164,13 @@ export default function DataStores() {
 
   // Handle import from external source
   const handleImport = () => {
-    if (isUploading) return;
-    
+    setShowImportModal(true);
+  };
+
+  const handleImportComplete = (importData: any) => {
     setIsUploading(true);
-    
+    showToast('Import started successfully');
+
     // Simulate import process
     setTimeout(() => {
       try {
@@ -180,7 +179,6 @@ export default function DataStores() {
           entries: Math.floor(Math.random() * 1000) + 100,
           lastSynced: 'Just now',
           status: 'Syncing',
-          aiReadiness: 'AI Linking',
           action: 'Syncing'
         };
 
@@ -189,15 +187,13 @@ export default function DataStores() {
           [activeSource]: [newDataset, ...(datasets[activeSource as keyof typeof datasets] || [])]
         });
 
-        showToast('Import started successfully');
-
         // Change status after "sync" completes
         setTimeout(() => {
           setDatasets(prev => ({
             ...prev,
             [activeSource]: prev[activeSource as keyof typeof datasets].map(ds => 
               ds.name === newDataset.name 
-                ? { ...ds, status: 'Ready', aiReadiness: 'AI Ready', action: 'Analyze' }
+                ? { ...ds, status: 'Ready', action: 'Analyze' }
                 : ds
             )
           }));
@@ -217,29 +213,8 @@ export default function DataStores() {
       switch (action) {
         case 'Analyze':
         case 'Ask Galaxy AI':
-          // Simulate analysis process
-          setDatasets(prev => ({
-            ...prev,
-            [activeSource]: prev[activeSource as keyof typeof datasets].map(ds =>
-              ds.name === dataset.name
-                ? { ...ds, status: 'Processing', action: 'Processing' }
-                : ds
-            )
-          }));
-
-          showToast(`Started analysis for ${dataset.name}`);
-
-          setTimeout(() => {
-            setDatasets(prev => ({
-              ...prev,
-              [activeSource]: prev[activeSource as keyof typeof datasets].map(ds =>
-                ds.name === dataset.name
-                  ? { ...ds, status: 'Ready', action: 'Ask Galaxy AI' }
-                  : ds
-              )
-            }));
-            showToast(`Analysis completed for ${dataset.name}`);
-          }, 2000);
+          // Navigate to chat screen with dataset context
+          router.push(`/ask?dataset=${encodeURIComponent(dataset.name)}`);
           break;
 
         case 'View in Canvas':
@@ -281,207 +256,196 @@ export default function DataStores() {
   };
 
   const getStatusBadge = (status: string) => {
-    const baseClasses = "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium";
     switch (status) {
       case 'Ready':
         return (
-          <span className={`${baseClasses} bg-[#00C4A7]/10 text-[#00C4A7]`}>
-            <div className="w-1.5 h-1.5 rounded-full bg-[#00C4A7]" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#00C4A7]/10 text-[#00C4A7]">
             Ready
           </span>
         );
       case 'Syncing':
         return (
-          <span className={`${baseClasses} bg-blue-500/10 text-blue-500`}>
-            <ArrowPathIcon className="w-3 h-3 animate-spin" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FFB547]/10 text-[#FFB547]">
+            <ArrowPathIcon className="w-3 h-3 mr-1 animate-spin" />
             Syncing
           </span>
         );
+      case 'Processing':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#4F46E5]/10 text-[#4F46E5]">
+            <ArrowPathIcon className="w-3 h-3 mr-1 animate-spin" />
+            Processing
+          </span>
+        );
       default:
-        return null;
-    }
-  };
-
-  const getAIReadinessBadge = (readiness: string) => {
-    const baseClasses = "px-2 py-0.5 rounded-full text-xs font-medium";
-    switch (readiness) {
-      case 'AI Ready':
-        return <span className={`${baseClasses} bg-[#00C4A7]/10 text-[#00C4A7]`}>AI Ready</span>;
-      case 'AI Linking':
-        return <span className={`${baseClasses} bg-blue-500/10 text-blue-500`}>AI Linking</span>;
-      case 'RAG Ready':
-        return <span className={`${baseClasses} bg-purple-500/10 text-purple-500`}>RAG Ready</span>;
-      case 'Compilation Tag':
-        return <span className={`${baseClasses} bg-orange-500/10 text-orange-500`}>Compilation Tag</span>;
-      case 'Editable':
-        return <span className={`${baseClasses} bg-gray-500/10 text-gray-400`}>Editable</span>;
-      default:
-        return null;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-400/10 text-gray-400">
+            {status}
+          </span>
+        );
     }
   };
 
   const getActionButton = (dataset: any) => {
-    const baseClasses = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all";
     switch (dataset.action) {
-      case 'Analyze':
-        return (
-          <button 
-            className={`${baseClasses} bg-[#00C4A7] text-white hover:bg-[#00C4A7]/90`}
-            onClick={() => handleDatasetAction(dataset, 'Analyze')}
-          >
-            Analyze
-          </button>
-        );
       case 'Ask Galaxy AI':
         return (
-          <button 
-            className={`${baseClasses} bg-[#00C4A7] text-white hover:bg-[#00C4A7]/90`}
+          <button
             onClick={() => handleDatasetAction(dataset, 'Ask Galaxy AI')}
+            className="flex items-center justify-center gap-2 bg-[#00C4A7]/10 text-[#00C4A7] px-3 py-1.5 rounded-lg hover:bg-[#00C4A7]/20 transition-colors text-sm font-medium w-[140px]"
           >
             Ask Galaxy AI
           </button>
         );
-      case 'Syncing':
-      case 'Processing':
-        return (
-          <button className={`${baseClasses} bg-[#00C4A7]/10 text-[#00C4A7]`} disabled>
-            <ArrowPathIcon className="w-4 h-4 animate-spin" />
-          </button>
-        );
       case 'View in Canvas':
         return (
-          <button 
-            className={`${baseClasses} bg-[#00C4A7] text-white hover:bg-[#00C4A7]/90`}
+          <button
             onClick={() => handleDatasetAction(dataset, 'View in Canvas')}
+            className="flex items-center justify-center gap-2 bg-[#4F46E5]/10 text-[#4F46E5] px-3 py-1.5 rounded-lg hover:bg-[#4F46E5]/20 transition-colors text-sm font-medium w-[140px]"
           >
             View in Canvas
           </button>
         );
       case 'Add to Audit Prep':
         return (
-          <button 
-            className={`${baseClasses} bg-[#00C4A7] text-white hover:bg-[#00C4A7]/90`}
+          <button
             onClick={() => handleDatasetAction(dataset, 'Add to Audit Prep')}
+            className="flex items-center justify-center gap-2 bg-[#FFB547]/10 text-[#FFB547] px-3 py-1.5 rounded-lg hover:bg-[#FFB547]/20 transition-colors text-sm font-medium w-[140px]"
           >
             Add to Audit Prep
           </button>
         );
+      case 'Syncing':
+      case 'Processing':
+        return (
+          <span className="inline-flex items-center justify-center w-[140px]">
+            <ArrowPathIcon className="w-5 h-5 text-gray-400 animate-spin" />
+          </span>
+        );
       default:
-        return null;
+        return (
+          <button
+            onClick={() => handleDatasetAction(dataset, dataset.action)}
+            className="flex items-center justify-center gap-2 bg-[#00C4A7]/10 text-[#00C4A7] px-3 py-1.5 rounded-lg hover:bg-[#00C4A7]/20 transition-colors text-sm font-medium w-[140px]"
+          >
+            {dataset.action}
+          </button>
+        );
     }
   };
 
   return (
-    <div className="flex-1 bg-[#121620] p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Hidden file input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-          multiple
-          accept=".csv,.xlsx,.json,.pdf,.docx"
-        />
-
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Data Stores</h1>
-            <p className="text-gray-400">Import and analyze your datasets</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00C4A7] text-white hover:bg-[#00C4A7]/90 transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={handleUpload}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <ArrowPathIcon className="w-5 h-5 animate-spin" />
-              ) : (
-                <CloudArrowUpIcon className="w-5 h-5" />
-              )}
-              {isUploading ? 'Uploading...' : 'Upload Dataset'}
-            </button>
-            <button 
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={handleImport}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <ArrowPathIcon className="w-5 h-5 animate-spin" />
-              ) : (
-                <DocumentArrowDownIcon className="w-5 h-5" />
-              )}
-              {isUploading ? 'Importing...' : 'Import'}
-            </button>
-          </div>
+    <div className="min-h-screen bg-[#121620] p-8">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-[32px] font-semibold text-white mb-2">Data Stores</h1>
+          <p className="text-[#B0B8C1]">Import and analyze your datasets</p>
         </div>
-
-        {/* Data Source Tabs */}
-        <div className="bg-[#1A1F2E] rounded-xl p-1 mb-6">
-          <div className="flex justify-between">
-            {dataSources.map((source) => (
-              <button
-                key={source.id}
-                className={`w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeSource === source.id
-                    ? 'bg-[#00C4A7] text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-                onClick={() => handleSourceChange(source.id)}
-              >
-                {source.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dataset Table */}
-        <div className="bg-[#1A1F2E] rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#2A2F38]">
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">DATASET NAME</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">ENTRIES</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">LAST SYNCED</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">STATUS</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">AI READINESS</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">ACTIONS</th>
-                <th className="w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {datasets[activeSource as keyof typeof datasets]?.map((dataset, index) => (
-                <tr
-                  key={dataset.name}
-                  className="border-b border-[#2A2F38] last:border-0 hover:bg-[#232834] transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <DocumentIcon className="w-5 h-5 text-gray-400" />
-                      <span className="text-white text-sm">{dataset.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">{dataset.entries}</td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">{dataset.lastSynced}</td>
-                  <td className="px-6 py-4">{getStatusBadge(dataset.status)}</td>
-                  <td className="px-6 py-4">{getAIReadinessBadge(dataset.aiReadiness)}</td>
-                  <td className="px-6 py-4">{getActionButton(dataset)}</td>
-                  <td className="px-6 py-4">
-                    <button 
-                      className="text-gray-400 hover:text-white transition-colors"
-                      onClick={() => handleViewDetails(dataset)}
-                    >
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleUpload}
+            disabled={isUploading}
+            className="flex items-center gap-2 bg-[#00C4A7] text-white px-4 py-2 rounded-xl hover:bg-[#00C4A7]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CloudArrowUpIcon className="h-5 w-5" />
+            <span>Upload Dataset</span>
+          </button>
+          <button
+            onClick={handleImport}
+            disabled={isUploading}
+            className="flex items-center gap-2 bg-[#4F46E5] text-white px-4 py-2 rounded-xl hover:bg-[#4F46E5]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <DocumentArrowDownIcon className="h-5 w-5" />
+            <span>Import</span>
+          </button>
         </div>
       </div>
+
+      {/* Data source tabs */}
+      <div className="flex gap-2 mb-6">
+        {dataSources.map((source) => (
+          <button
+            key={source.id}
+            onClick={() => handleSourceChange(source.id)}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeSource === source.id
+                ? 'bg-[#00C4A7] text-white'
+                : 'text-[#B0B8C1] hover:bg-[#1A1F2E]'
+            }`}
+          >
+            {source.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Dataset table */}
+      <div className="bg-[#1A1F2E] rounded-xl overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-[#2A2F38]">
+              <th className="text-left py-4 px-6 text-[#B0B8C1] font-medium">DATASET NAME</th>
+              <th className="text-left py-4 px-6 text-[#B0B8C1] font-medium">ENTRIES</th>
+              <th className="text-left py-4 px-6 text-[#B0B8C1] font-medium">LAST SYNCED</th>
+              <th className="text-left py-4 px-6 text-[#B0B8C1] font-medium">STATUS</th>
+              <th className="text-right py-4 px-6 text-[#B0B8C1] font-medium">ACTIONS</th>
+              <th className="w-16"></th> {/* Empty header for preview icon */}
+            </tr>
+          </thead>
+          <tbody>
+            {(datasets[activeSource as keyof typeof datasets] || []).map((dataset, index) => (
+              <tr key={index} className="border-b border-[#2A2F38] last:border-0">
+                <td className="py-4 px-6">
+                  <div className="flex items-center gap-3">
+                    <DocumentIcon className="h-5 w-5 text-[#B0B8C1]" />
+                    <span className="text-white">{dataset.name}</span>
+                  </div>
+                </td>
+                <td className="py-4 px-6 text-[#B0B8C1]">{dataset.entries}</td>
+                <td className="py-4 px-6 text-[#B0B8C1]">{dataset.lastSynced}</td>
+                <td className="py-4 px-6">{getStatusBadge(dataset.status)}</td>
+                <td className="py-4 px-6 text-right">
+                  {getActionButton(dataset)}
+                </td>
+                <td className="py-4 px-6 w-16 text-center">
+                  <button
+                    onClick={() => handleViewDetails(dataset)}
+                    className="p-1.5 text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                    title="Preview Dataset"
+                  >
+                    <EyeIcon className="h-5 w-5" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* File input (hidden) */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        multiple
+        accept=".csv,.xlsx,.json,.pdf,.docx"
+      />
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportComplete}
+      />
+
+      {/* Toast notification */}
+      {toastVisible && (
+        <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+          toastType === 'success' ? 'bg-[#00C4A7]' : 'bg-red-500'
+        }`}>
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 } 

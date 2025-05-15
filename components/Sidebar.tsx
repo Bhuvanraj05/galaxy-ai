@@ -37,7 +37,7 @@ const navItems = [
     icon: '/icons/activity.svg'
   },
   {
-    name: 'Lab Resources',
+    name: 'Knowledge base',
     href: '/resources',
     icon: '/icons/lab.svg'
   },

@@ -6,7 +6,9 @@ import {
   ArrowDownTrayIcon,
   HandThumbUpIcon,
   HandThumbDownIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  ShareIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 
 interface CanvasProps {
@@ -18,6 +20,13 @@ export default function Canvas({ data, type = 'workflow' }: CanvasProps) {
   const [activeTab, setActiveTab] = useState('chart');
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
   const [isPushing, setIsPushing] = useState(false);
+
+  // Get current date in the format "Month DD, YYYY"
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
   const handlePushToELN = async () => {
     setIsPushing(true);
@@ -103,6 +112,12 @@ export default function Canvas({ data, type = 'workflow' }: CanvasProps) {
 
   return (
     <div className="space-y-4">
+      {/* Date display */}
+      <div className="flex items-center gap-2 text-[#B0B8C1] text-sm">
+        <CalendarIcon className="h-4 w-4" />
+        <span>{currentDate}</span>
+      </div>
+
       {/* Push to ELN Button - Only show for notebook type */}
       {type === 'notebook' && (
         <div className="flex justify-end">
@@ -183,6 +198,11 @@ export default function Canvas({ data, type = 'workflow' }: CanvasProps) {
             }`}
           >
             <HandThumbDownIcon className="h-5 w-5" />
+          </button>
+          <button
+            className="p-2 rounded-lg transition-colors text-gray-400 hover:bg-[#232834] hover:text-white"
+          >
+            <ShareIcon className="h-5 w-5" />
           </button>
         </div>
         <button

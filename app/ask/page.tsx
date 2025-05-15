@@ -29,7 +29,11 @@ import {
   ClipboardDocumentCheckIcon,
   TruckIcon,
   BookOpenIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  PencilSquareIcon as PencilIcon,
+  CheckIcon,
+  ShareIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -72,6 +76,7 @@ interface Message {
   };
   canvas?: CanvasData;
   actions?: ResponseActions;
+  isExpanded?: boolean;
 }
 
 interface UseCase {
@@ -212,7 +217,27 @@ export default function AskPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [expandedCanvas, setExpandedCanvas] = useState<string | null>(null);
+  const [editingCanvas, setEditingCanvas] = useState<{
+    title: boolean;
+    description: boolean;
+    additionalInfo: boolean;
+  }>({
+    title: false,
+    description: false,
+    additionalInfo: false
+  });
+  const [editedCanvas, setEditedCanvas] = useState<{
+    title: string;
+    description: string;
+    additionalInfo: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showAskAIPopup, setShowAskAIPopup] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [expandedSection, setExpandedSection] = useState<{
+    type: 'title' | 'description' | 'additionalInfo';
+    content: string;
+  } | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -576,7 +601,7 @@ export default function AskPage() {
     else if (query.toLowerCase().includes('rewrite lisa') && query.toLowerCase().includes('clarify')) {
       response = {
         id: Date.now().toString(),
-        content: "�� Original Note:\n\"Found irreg. readings w/ B-412, poss. contamination? Temp ok but moist. high @ 14.2%. Rerun needed + check cal. Informed JS.\"\n\n✍️ Clarified Version:\n\nDate: May 15, 2023\nTime: 14:30\nTechnician: Lisa D.\nBatch: B-412\n\nObservations:\n1. Irregular readings detected during routine analysis\n2. Moisture content measured at 14.2% (Above specification: 10.5% - 12.5%)\n3. Temperature within normal range: 22.1°C\n\nPotential Issue:\n- Possible sample contamination affecting readings\n\nActions Taken:\n1. Flagged batch for reanalysis\n2. Initiated calibration check on moisture analyzer\n3. Notified John Smith (Shift Supervisor)\n\nNext Steps:\n1. Rerun analysis with fresh sample\n2. Verify equipment calibration\n3. Document follow-up results\n\nStatus: Pending Resolution",
+        content: "Original Note:\n\"Found irreg. readings w/ B-412, poss. contamination? Temp ok but moist. high @ 14.2%. Rerun needed + check cal. Informed JS.\"\n\n✍️ Clarified Version:\n\nDate: May 15, 2023\nTime: 14:30\nTechnician: Lisa D.\nBatch: B-412\n\nObservations:\n1. Irregular readings detected during routine analysis\n2. Moisture content measured at 14.2% (Above specification: 10.5% - 12.5%)\n3. Temperature within normal range: 22.1°C\n\nPotential Issue:\n- Possible sample contamination affecting readings\n\nActions Taken:\n1. Flagged batch for reanalysis\n2. Initiated calibration check on moisture analyzer\n3. Notified John Smith (Shift Supervisor)\n\nNext Steps:\n1. Rerun analysis with fresh sample\n2. Verify equipment calibration\n3. Document follow-up results\n\nStatus: Pending Resolution",
         role: 'assistant',
         timestamp: new Date(),
         actions: {
@@ -783,6 +808,91 @@ export default function AskPage() {
     await simulateResponse(input);
   };
 
+  // Add this function to handle AI query submission
+  const handleAIQuery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiQuery.trim() || isTyping) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: aiQuery,
+      role: 'user',
+      timestamp: new Date(),
+      isExpanded: true
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setAiQuery('');
+    setShowAskAIPopup(false);
+
+    await simulateResponse(aiQuery);
+  };
+
+  // Modify handleCanvasEdit to show AI popup immediately
+  const handleCanvasEdit = (field: 'title' | 'description' | 'additionalInfo', value: string) => {
+    setEditedCanvas(prev => ({
+      ...(prev || {
+        title: messages.find(m => m.id === expandedCanvas)?.canvas?.title || '',
+        description: messages.find(m => m.id === expandedCanvas)?.canvas?.description || '',
+        additionalInfo: messages.find(m => m.id === expandedCanvas)?.canvas?.additionalInfo || ''
+      }),
+      [field]: value
+    }));
+
+    // Show the popup immediately when starting to edit
+    setShowAskAIPopup(true);
+    setExpandedSection({
+      type: field,
+      content: messages.find(m => m.id === expandedCanvas)?.canvas?.[field] || ''
+    });
+
+    // Set editing state
+    setEditingCanvas(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  // Add this function to handle clicking the pencil icon
+  const handleEditClick = (field: 'title' | 'description' | 'additionalInfo') => {
+    const content = messages.find(m => m.id === expandedCanvas)?.canvas?.[field] || '';
+    setShowAskAIPopup(true);
+    setExpandedSection({
+      type: field,
+      content
+    });
+    setEditingCanvas(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  // Add this function to save canvas edits
+  const saveCanvasEdits = () => {
+    if (!editedCanvas || !expandedCanvas) return;
+    
+    setMessages(prev => prev.map(message => {
+      if (message.id === expandedCanvas && message.canvas) {
+        return {
+          ...message,
+          canvas: {
+            ...message.canvas,
+            title: editedCanvas.title,
+            description: editedCanvas.description,
+            additionalInfo: editedCanvas.additionalInfo
+          }
+        };
+      }
+      return message;
+    }));
+
+    setEditingCanvas({
+      title: false,
+      description: false,
+      additionalInfo: false
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#121620] flex">
       {/* Main Content Area */}
@@ -792,140 +902,146 @@ export default function AskPage() {
         </h1>
 
         <div className="max-w-[900px] mx-auto w-full flex-1 flex flex-col">
-          {/* Messages Area */}
-          {messages.length > 0 && (
-            <div className="flex-1 overflow-y-auto mb-6 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+          {/* Messages Area with fixed height and scrolling */}
+          <div className="flex-1 overflow-y-auto mb-6">
+            {messages.length > 0 && (
+              <div className="space-y-4 pb-4">
+                {messages.map((message) => (
                   <div
-                    className={`max-w-[70%] rounded-2xl px-6 py-4 ${
-                      message.role === 'user'
-                        ? 'bg-[#00C4A7] text-white'
-                        : 'bg-[#1A1F2E] text-[#B0B8C1]'
-                    }`}
+                    key={message.id}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="space-y-4">
-                      <div>{message.content}</div>
-                      
-                      {message.chart && (
-                        <div className="mt-4 space-y-4">
-                          <div className="bg-[#121620] rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-medium">{message.chart.title}</h3>
-                              <button
-                                onClick={() => setExpandedCanvas(message.id)}
-                                className="text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors"
-                              >
-                                <ArrowsPointingOutIcon className="h-5 w-5" />
-                              </button>
-                            </div>
-                            <Bar
-                              data={message.chart.data}
-                              options={{
-                                responsive: true,
-                                scales: {
-                                  y: {
-                                    beginAtZero: true,
-                                    grid: {
-                                      color: '#2A2F38'
+                    <div
+                      className={`max-w-[70%] rounded-2xl px-6 py-4 ${
+                        message.role === 'user'
+                          ? 'bg-[#00C4A7] text-white'
+                          : 'bg-[#1A1F2E] text-[#B0B8C1]'
+                      }`}
+                    >
+                      <div className="space-y-4">
+                        <div>{message.content}</div>
+                        
+                        {message.chart && (
+                          <div className="mt-4 space-y-4">
+                            <div className="bg-[#121620] rounded-xl p-4">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-medium">{message.chart.title}</h3>
+                                <button
+                                  onClick={() => setExpandedCanvas(message.id)}
+                                  className="text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors"
+                                >
+                                  <ArrowsPointingOutIcon className="h-5 w-5" />
+                                </button>
+                              </div>
+                              <Bar
+                                data={message.chart.data}
+                                options={{
+                                  responsive: true,
+                                  scales: {
+                                    y: {
+                                      beginAtZero: true,
+                                      grid: {
+                                        color: '#2A2F38'
+                                      },
+                                      ticks: {
+                                        color: '#B0B8C1'
+                                      }
                                     },
-                                    ticks: {
-                                      color: '#B0B8C1'
+                                    x: {
+                                      grid: {
+                                        color: '#2A2F38'
+                                      },
+                                      ticks: {
+                                        color: '#B0B8C1'
+                                      }
                                     }
                                   },
-                                  x: {
-                                    grid: {
-                                      color: '#2A2F38'
-                                    },
-                                    ticks: {
-                                      color: '#B0B8C1'
+                                  plugins: {
+                                    legend: {
+                                      display: false
                                     }
                                   }
-                                },
-                                plugins: {
-                                  legend: {
-                                    display: false
-                                  }
-                                }
-                              }}
-                            />
-                            <div className="flex items-center gap-4 mt-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-[#00C4A7]" />
-                                <span className="text-sm">Normal</span>
+                                }}
+                              />
+                              <div className="flex items-center gap-4 mt-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-[#00C4A7]" />
+                                  <span className="text-sm">Normal</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-[#FFB547]" />
+                                  <span className="text-sm">Warning</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-[#FF5A75]" />
+                                  <span className="text-sm">Critical</span>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-[#FFB547]" />
-                                <span className="text-sm">Warning</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-[#FF5A75]" />
-                                <span className="text-sm">Critical</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2A2F38]">
-                              <span className="text-sm text-[#B0B8C1]">Generated using Galaxy AI</span>
-                              <div className="flex items-center gap-2">
-                                <button className="px-3 py-1.5 text-sm text-[#00C4A7] bg-[#00C4A7]/10 rounded-lg hover:bg-[#00C4A7]/20 transition-colors">
-                                  Add to Your Reports
-                                </button>
-                                <button className="px-3 py-1.5 text-sm text-[#00C4A7] bg-[#00C4A7]/10 rounded-lg hover:bg-[#00C4A7]/20 transition-colors">
-                                  Download
-                                </button>
+                              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2A2F38]">
+                                <span className="text-sm text-[#B0B8C1]">Generated using Galaxy AI</span>
+                                <div className="flex items-center gap-2">
+                                  <button className="px-3 py-1.5 text-sm text-[#00C4A7] bg-[#00C4A7]/10 rounded-lg hover:bg-[#00C4A7]/20 transition-colors">
+                                    Add to Your Reports
+                                  </button>
+                                  <button className="px-3 py-1.5 text-sm text-[#00C4A7] bg-[#00C4A7]/10 rounded-lg hover:bg-[#00C4A7]/20 transition-colors">
+                                    Download
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {message.actions && (
-                        <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-[#2A2F38]">
-                          {message.actions.canAddToReports && (
+                        {message.actions && (
+                          <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-[#2A2F38]">
+                            {message.actions.canAddToReports && (
+                              <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
+                                <HandThumbUpIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                            {message.actions.canCopy && (
+                              <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
+                                <HandThumbDownIcon className="h-5 w-5" />
+                              </button>
+                            )}
                             <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
-                              <HandThumbUpIcon className="h-5 w-5" />
+                              <ShareIcon className="h-5 w-5" />
                             </button>
-                          )}
-                          {message.actions.canCopy && (
-                            <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
-                              <HandThumbDownIcon className="h-5 w-5" />
-                            </button>
-                          )}
-                          {message.actions.canCopy && (
-                            <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
-                              <ClipboardIcon className="h-5 w-5" />
-                            </button>
-                          )}
-                          {message.actions.canRegenerate && (
-                            <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
-                              <ArrowPathIcon className="h-5 w-5" />
-                            </button>
-                          )}
-                        </div>
-                      )}
+                            {message.actions.canCopy && (
+                              <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
+                                <ClipboardIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                            {message.actions.canRegenerate && (
+                              <button className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors">
+                                <ArrowPathIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="bg-[#1A1F2E] rounded-2xl px-6 py-4">
-                    <div className="flex gap-2">
-                      <div className="w-2 h-2 bg-[#B0B8C1] rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-[#B0B8C1] rounded-full animate-bounce [animation-delay:0.2s]" />
-                      <div className="w-2 h-2 bg-[#B0B8C1] rounded-full animate-bounce [animation-delay:0.4s]" />
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-[#1A1F2E] rounded-2xl px-6 py-4">
+                      <div className="flex gap-2">
+                        <div className="w-2 h-2 bg-[#B0B8C1] rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-[#B0B8C1] rounded-full animate-bounce [animation-delay:0.2s]" />
+                        <div className="w-2 h-2 bg-[#B0B8C1] rounded-full animate-bounce [animation-delay:0.4s]" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+                )}
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-          {/* Input Area */}
-          <div className="relative">
+          {/* Static Bottom Container */}
+          <div className="sticky bottom-0 bg-[#121620] pt-4">
+            {/* Input Area */}
             <form onSubmit={handleSubmit} className="flex items-center bg-[#1A1F2E] rounded-2xl px-8 py-5 mb-4">
               <PaperClipIcon className="h-6 w-6 text-[#B0B8C1] mr-4" />
               <input
@@ -972,38 +1088,47 @@ export default function AskPage() {
             </form>
 
             {/* Prompt Suggestions */}
-            {messages.length === 0 && showSuggestions && selectedUseCase && (
-              <div className="bg-[#1A1F2E] rounded-2xl p-4 space-y-2 mb-8">
+            {selectedUseCase && (
+              <div className="bg-[#1A1F2E] rounded-2xl p-3 space-y-1.5 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[#00C4A7] font-medium text-sm">{selectedUseCase.name} Templates</h3>
+                  <button 
+                    onClick={() => setSelectedUseCase(null)}
+                    className="text-[#B0B8C1] hover:text-white"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
                 {selectedUseCase.suggestedPrompts.map((prompt, index) => (
                   <button
                     key={index}
                     onClick={() => handlePromptSelect(prompt)}
-                    className="w-full flex items-center gap-3 text-left px-4 py-3 text-[#B0B8C1] hover:bg-[#2A2F38] rounded-xl transition-colors group"
+                    className="w-full flex items-center gap-2 text-left px-3 py-2 text-[#B0B8C1] hover:bg-[#2A2F38] rounded-lg transition-colors group text-sm"
                   >
-                    <MagnifyingGlassIcon className="h-5 w-5 text-[#B0B8C1] group-hover:text-[#00C4A7]" />
+                    <MagnifyingGlassIcon className="h-4 w-4 text-[#B0B8C1] group-hover:text-[#00C4A7]" />
                     <span>{prompt}</span>
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Use Cases Grid - Only show when no messages */}
-            {messages.length === 0 && (
-              <div className="grid grid-cols-3 gap-6">
+            {/* Use Cases Grid */}
+            {!selectedUseCase && (
+              <div className="grid grid-cols-3 gap-3 mb-4">
                 {useCases.map((useCase) => (
                   <button
                     key={useCase.name}
                     onClick={() => handleUseCaseClick(useCase)}
                     className={`
-                      flex items-center gap-3 bg-[#1A1F2E] text-[#B0B8C1] 
+                      flex items-center gap-2 bg-[#1A1F2E] text-[#B0B8C1] 
                       hover:bg-[#00C4A7]/10 hover:text-[#00C4A7] 
-                      px-8 py-5 rounded-xl border border-[#2A2F38] 
-                      shadow-sm transition-all group
+                      px-4 py-3 rounded-xl border border-[#2A2F38] 
+                      shadow-sm transition-all group text-sm
                       ${selectedUseCase?.name === useCase.name ? 'bg-[#00C4A7]/10 text-[#00C4A7] border-[#00C4A7]/30' : ''}
                     `}
                   >
-                    <useCase.icon className="h-6 w-6 transition-transform group-hover:scale-110" />
-                    <span className="text-base font-medium">{useCase.name}</span>
+                    <useCase.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
+                    <span className="font-medium">{useCase.name}</span>
                   </button>
                 ))}
               </div>
@@ -1015,27 +1140,92 @@ export default function AskPage() {
       {/* Right Side Canvas */}
       {expandedCanvas && messages.find(m => m.id === expandedCanvas)?.canvas && (
         <div className="w-[480px] bg-[#1A1F2E] h-screen sticky top-0 right-0 flex flex-col">
-          <div className="flex items-center justify-between p-6 border-b border-[#2A2F38]">
-            <h2 className="text-2xl font-semibold text-[#00C4A7]">
-              {messages.find(m => m.id === expandedCanvas)?.canvas?.title}
-            </h2>
-            <button
-              onClick={() => setExpandedCanvas(null)}
-              className="text-[#B0B8C1] hover:text-white transition-colors"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
+          <div className="flex flex-col p-6 border-b border-[#2A2F38]">
+            <div className="flex items-center gap-2 text-[#B0B8C1] text-sm mb-4">
+              <CalendarIcon className="h-4 w-4" />
+              <span>{new Date().toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+              })}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-1">
+                {editingCanvas.title ? (
+                  <div className="flex-1 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedCanvas?.title || messages.find(m => m.id === expandedCanvas)?.canvas?.title}
+                      onChange={(e) => handleCanvasEdit('title', e.target.value)}
+                      className="flex-1 bg-[#232834] text-white text-2xl font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C4A7]"
+                    />
+                    <button
+                      onClick={saveCanvasEdits}
+                      className="text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors"
+                    >
+                      <CheckIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-semibold text-[#00C4A7]">
+                      {editedCanvas?.title || messages.find(m => m.id === expandedCanvas)?.canvas?.title}
+                    </h2>
+                    <button
+                      onClick={() => handleEditClick('title')}
+                      className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors ml-2"
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={() => setExpandedCanvas(null)}
+                className="text-[#B0B8C1] hover:text-white transition-colors ml-4"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <p className="text-[#B0B8C1]">
-              {messages.find(m => m.id === expandedCanvas)?.canvas?.description}
-            </p>
+            <div className="relative group">
+              {editingCanvas.description ? (
+                <div className="flex items-start gap-2">
+                  <textarea
+                    value={editedCanvas?.description || messages.find(m => m.id === expandedCanvas)?.canvas?.description}
+                    onChange={(e) => handleCanvasEdit('description', e.target.value)}
+                    className="flex-1 bg-[#232834] text-[#B0B8C1] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C4A7] min-h-[100px] resize-none"
+                  />
+                  <button
+                    onClick={saveCanvasEdits}
+                    className="text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors"
+                  >
+                    <CheckIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2">
+                  <p className="text-[#B0B8C1] flex-1">
+                    {editedCanvas?.description || messages.find(m => m.id === expandedCanvas)?.canvas?.description}
+                  </p>
+                  <button
+                    onClick={() => handleEditClick('description')}
+                    className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="bg-[#121620] rounded-xl p-6">
-              <h3 className="text-lg font-medium mb-4">
-                {messages.find(m => m.id === expandedCanvas)?.canvas?.chart.title}
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-white">
+                  {messages.find(m => m.id === expandedCanvas)?.canvas?.chart.title}
+                </h3>
+              </div>
               <Bar
                 data={messages.find(m => m.id === expandedCanvas)?.canvas?.chart.data || { labels: [], datasets: [] }}
                 options={{
@@ -1056,36 +1246,70 @@ export default function AskPage() {
               />
             </div>
 
-            <div className="bg-[#121620] rounded-xl p-6">
-              <h3 className="text-lg font-medium mb-4">Data Table</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#2A2F38]">
-                      <th className="text-left py-3 px-4 text-[#B0B8C1]">Technician</th>
-                      <th className="text-left py-3 px-4 text-[#B0B8C1]">Batch ID</th>
-                      <th className="text-left py-3 px-4 text-[#B0B8C1]">Moisture (%)</th>
-                      <th className="text-left py-3 px-4 text-[#B0B8C1]">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {messages.find(m => m.id === expandedCanvas)?.canvas?.dataTable?.map((row, index) => (
-                      <tr key={index} className="border-b border-[#2A2F38]">
-                        <td className="py-3 px-4 text-[#B0B8C1]">{row.technician}</td>
-                        <td className="py-3 px-4 text-[#B0B8C1]">{row.batchId}</td>
-                        <td className="py-3 px-4 text-[#B0B8C1]">{row.moisture}</td>
-                        <td className="py-3 px-4 text-[#B0B8C1]">{row.status}</td>
+            {messages.find(m => m.id === expandedCanvas)?.canvas?.dataTable && (
+              <div className="bg-[#121620] rounded-xl p-6">
+                <h3 className="text-lg font-medium text-white mb-4">Data Table</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#2A2F38]">
+                        <th className="text-left py-3 px-4 text-[#B0B8C1]">Technician</th>
+                        <th className="text-left py-3 px-4 text-[#B0B8C1]">Batch ID</th>
+                        <th className="text-left py-3 px-4 text-[#B0B8C1]">Moisture (%)</th>
+                        <th className="text-left py-3 px-4 text-[#B0B8C1]">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {messages.find(m => m.id === expandedCanvas)?.canvas?.dataTable?.map((row, index) => (
+                        <tr key={index} className="border-b border-[#2A2F38]">
+                          <td className="py-3 px-4 text-[#B0B8C1]">{row.technician}</td>
+                          <td className="py-3 px-4 text-[#B0B8C1]">{row.batchId}</td>
+                          <td className="py-3 px-4 text-[#B0B8C1]">{row.moisture}</td>
+                          <td className="py-3 px-4 text-[#B0B8C1]">{row.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
+
+            {messages.find(m => m.id === expandedCanvas)?.canvas?.additionalInfo && (
+              <div className="relative group bg-[#121620] rounded-xl p-6">
+                {editingCanvas.additionalInfo ? (
+                  <div className="flex items-start gap-2">
+                    <textarea
+                      value={editedCanvas?.additionalInfo || messages.find(m => m.id === expandedCanvas)?.canvas?.additionalInfo}
+                      onChange={(e) => handleCanvasEdit('additionalInfo', e.target.value)}
+                      className="flex-1 bg-[#232834] text-[#B0B8C1] p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C4A7] min-h-[60px] resize-none"
+                    />
+                    <button
+                      onClick={saveCanvasEdits}
+                      className="text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors"
+                    >
+                      <CheckIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <p className="text-[#B0B8C1] flex-1">
+                      {editedCanvas?.additionalInfo || messages.find(m => m.id === expandedCanvas)?.canvas?.additionalInfo}
+                    </p>
+                    <button
+                      onClick={() => handleEditClick('additionalInfo')}
+                      className="text-[#B0B8C1] hover:text-[#00C4A7] transition-colors"
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="p-6 border-t border-[#2A2F38] bg-[#1A1F2E]">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#B0B8C1]">Generated using imagoAI</span>
+              <span className="text-sm text-[#B0B8C1]">Generated using Galaxy AI</span>
               <div className="flex items-center gap-2">
                 <button className="px-4 py-2 text-sm text-[#00C4A7] bg-[#00C4A7]/10 rounded-lg hover:bg-[#00C4A7]/20 transition-colors">
                   Add to Your Reports
@@ -1095,6 +1319,73 @@ export default function AskPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ask AI Popup */}
+      {showAskAIPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#1A1F2E] rounded-xl p-6 max-w-[500px] w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-[#00C4A7]">Ask Galaxy AI</h3>
+              <button
+                onClick={() => {
+                  setShowAskAIPopup(false);
+                  setEditingCanvas({
+                    title: false,
+                    description: false,
+                    additionalInfo: false
+                  });
+                }}
+                className="text-[#B0B8C1] hover:text-white transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-[#B0B8C1] mb-2">Currently editing:</p>
+              <div className="bg-[#232834] rounded-lg p-3 mb-4">
+                <p className="text-white">{expandedSection?.content}</p>
+              </div>
+              <p className="text-[#B0B8C1] text-sm">Ask Galaxy AI to help you expand or improve this content.</p>
+            </div>
+
+            <form onSubmit={handleAIQuery} className="space-y-4">
+              <div className="relative">
+                <textarea
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  placeholder="Ask Galaxy AI to help you improve this content..."
+                  className="w-full bg-[#232834] text-white rounded-lg p-4 pr-12 min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-[#00C4A7]"
+                />
+                <button
+                  type="submit"
+                  disabled={!aiQuery.trim() || isTyping}
+                  className="absolute bottom-4 right-4 text-[#00C4A7] hover:text-[#00C4A7]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <PaperAirplaneIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAiQuery("How can I improve this content to be more detailed?")}
+                  className="text-sm text-[#B0B8C1] bg-[#232834] px-3 py-1.5 rounded-lg hover:bg-[#2A2F38] transition-colors"
+                >
+                  Make it more detailed
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAiQuery("Can you help me make this content more concise?")}
+                  className="text-sm text-[#B0B8C1] bg-[#232834] px-3 py-1.5 rounded-lg hover:bg-[#2A2F38] transition-colors"
+                >
+                  Make it more concise
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

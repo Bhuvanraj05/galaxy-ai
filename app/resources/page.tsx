@@ -98,7 +98,7 @@ export default function LabResources() {
   return (
     <div className="flex flex-col w-full max-w-6xl mx-auto pt-6 px-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Lab Resources</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Knowledge base</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Upload and manage lab documentation including SOPs, protocols, and compliance documents
         </p>

@@ -128,7 +128,7 @@ const steps = [
   { id: 'role', name: 'Role' },
   { id: 'categories', name: 'Categories' },
   { id: 'integrations', name: 'Integrations' },
-  { id: 'resources', name: 'Lab Resources' }
+  { id: 'resources', name: 'Knowledge base' }
 ];
 
 export default function OnboardingFlow() {
@@ -403,11 +403,11 @@ export default function OnboardingFlow() {
             </div>
           )}
 
-          {/* Step 5: Lab Resources */}
+          {/* Step 5: Knowledge base */}
           {currentStep === 4 && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Upload Lab Resources
+                Upload Knowledge base
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Upload your critical lab documents to enhance Galaxy AI's capabilities.
