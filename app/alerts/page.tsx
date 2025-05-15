@@ -513,7 +513,7 @@ export default function AlertsPage() {
           </div>
         )}
 
-        {/* Add PDF Viewer Modal */}
+        {/* PDF Viewer Modal */}
         <PDFViewerModal
           isOpen={selectedDocument !== null}
           onClose={() => setSelectedDocument(null)}
