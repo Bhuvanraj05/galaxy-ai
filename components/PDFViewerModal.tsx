@@ -1,31 +1,16 @@
 import type { FC, ReactElement } from 'react';
 import React, { useState } from 'react';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { Document, Page, pdfjs } from 'react-pdf';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-// Configure options to avoid canvas dependency
-const options = {
-  cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/cmaps/',
-  cMapPacked: true,
-  standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/standard_fonts/',
-  disableWorker: true,
-  disableAutoFetch: true,
-  disableStream: true,
-  disableCreateObjectURL: true,
-  disableFontFace: true,
-  useSystemFonts: false,
-  useWorkerFetch: false,
-  canvasFactory: null,
-  isEvalSupported: false,
-  maxImageSize: -1,
-  renderInteractiveForms: false
-} as const;
+// Configure worker
+if (typeof window !== 'undefined') {
+  const pdfjsWorker = require('pdfjs-dist/build/pdf.worker.entry');
+  require('pdfjs-dist/build/pdf.worker');
+  require('pdfjs-dist').GlobalWorkerOptions.workerSrc = pdfjsWorker;
+}
 
 interface PDFViewerModalProps {
   pdfUrl: string;
@@ -69,19 +54,21 @@ const PDFViewerModal: FC<PDFViewerModalProps> = ({ pdfUrl, onClose }): ReactElem
           <Document
             file={pdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
-            options={options}
             loading="Loading PDF..."
             error="Failed to load PDF file."
+            noData="No PDF file specified."
+            options={{
+              cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/cmaps/',
+              cMapPacked: true,
+            }}
           >
             <Page 
               pageNumber={pageNumber} 
               renderTextLayer={false}
               renderAnnotationLayer={false}
-              className="max-w-full"
               loading="Loading page..."
               error="Failed to load page."
-              canvasBackground="transparent"
-              renderMode="svg"
+              className="max-w-full"
             />
           </Document>
         </div>
