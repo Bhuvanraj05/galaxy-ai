@@ -160,7 +160,7 @@ const useCases: UseCase[] = [
       'List expired materials'
     ]
   }
-] as const;
+];
 
 const datasets = [
   'LIMS Data',
@@ -1124,7 +1124,6 @@ export default function AskPage() {
                       hover:bg-[#00C4A7]/10 hover:text-[#00C4A7] 
                       px-4 py-3 rounded-xl border border-[#2A2F38] 
                       shadow-sm transition-all group text-sm
-                      ${selectedUseCase?.name === useCase.name ? 'bg-[#00C4A7]/10 text-[#00C4A7] border-[#00C4A7]/30' : ''}
                     `}
                   >
                     <useCase.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
