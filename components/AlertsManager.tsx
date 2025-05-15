@@ -132,10 +132,7 @@ const categoryData = {
 export default function AlertsManager() {
   const [selectedSeverity, setSelectedSeverity] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDoc, setSelectedDoc] = useState<{
-    name: string;
-    path: string;
-  } | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<Alert['linkedDoc'] | null>(null);
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
