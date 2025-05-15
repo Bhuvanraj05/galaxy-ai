@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack(config) {
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack'],
-    });
+  webpack: (config) => {
+    // Add fallback for 'canvas' module
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      canvas: false,
+    };
     return config;
   },
+  // Disable server-side rendering for PDF viewer
+  reactStrictMode: true,
 };
 
 module.exports = nextConfig; 
