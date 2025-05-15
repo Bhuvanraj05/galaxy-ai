@@ -58,7 +58,7 @@ const alerts: Alert[] = [
   {
     id: '2',
     title: 'Test Result Outside SOP Range',
-    message: '🚨 Moisture result of 14.7% for Corn Batch #C-4456 exceeds SOP-LAB-QC-014's limit of 13.0%. Retest and CAPA action completed, see [CAPA Report – Moisture Deviation].',
+    message: '🚨 Moisture result of 14.7% for Corn Batch #C-4456 exceeds SOP-LAB-QC-014\'s limit of 13.0%. Retest and CAPA action completed, see [CAPA Report – Moisture Deviation].',
     severity: 'critical',
     timestamp: '30 minutes ago',
     linkedDoc: {
